@@ -14,10 +14,15 @@ const Stack = createStackNavigator();
  * @returns {React.ReactNode}
  */
 function App() {
-
+    const navigatorOptions = {
+        screenOptions: {
+            headerShown: false
+        }
+    };
+    
     return (
         <NavigationContainer>
-            <Stack.Navigator>
+            <Stack.Navigator {...navigatorOptions}>
                 <Stack.Screen name={translate('explore')} component={NavigationMenu} />
             </Stack.Navigator>
         </NavigationContainer>

@@ -7,7 +7,7 @@ import NewsContainer from '../../screens/news/NewsContainer';
 import StatisticsContainer from '../../screens/statistics/StatisticsContainer';
 import SettingsContainer from '../../screens/settings/SettingsContainer';
 
-import MapIcon from '../icons/MapIcon';
+import Icon from '../icons/Icon';
 
 import translate from '../translator/translationUtil';
 import colors from '../colors/colors';
@@ -24,36 +24,13 @@ function NavigationMenu() {
         initialRouteName: translate('explore'),
         screenOptions: ({ route }) => ({
             tabBarIcon: ({ focused }) => {
-                let iconName;
-
-                switch(route.name) {
-                    case translate('explore'):
-                        iconName = focused ? 'pin' : 'pin-outline';
-
-                        break;
-
-                    case translate('news'):
-                        iconName = focused ? 'paper' : 'paper-outline';
-
-                        break;
-
-                    case translate('statistics'):
-                        iconName = focused ? 'stats' : 'stats-outline';
-
-                        break;
-
-                    case translate('settings'):
-                        iconName = focused ? 'settings' : 'settings-outline';
-
-                        break;
-
-                    default:
-                        iconName = '';
-                        break;
-                }
+                const iconData = {
+                    color: focused ? colors.primary : colors['dark-gray'],
+                    name: route.name
+                };
 
                 return (
-                    <MapIcon />
+                    <Icon {...iconData}/>
                 );
             }
         }),
