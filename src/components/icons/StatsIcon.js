@@ -1,5 +1,7 @@
 import React from "react";
 
+import Svg, { Rect } from 'react-native-svg';
+
 /**
  * @description Renders a filled or unfilled statistics icon.
  * 
@@ -8,12 +10,12 @@ import React from "react";
  */
 function StatsIcon(props) {
     return (
-        <svg
+        <Svg
             xmlns="http://www.w3.org/2000/svg"
             className="ionicon"
             viewBox="0 0 512 512"
         >
-            <rect
+            <Rect
                 width="48"
                 height="160"
                 x="64"
@@ -25,8 +27,8 @@ function StatsIcon(props) {
                 strokeWidth="32"
                 rx="8"
                 ry="8"
-            ></rect>
-            <rect
+            ></Rect>
+            <Rect
                 width="48"
                 height="256"
                 x="288"
@@ -38,8 +40,8 @@ function StatsIcon(props) {
                 strokeWidth="32"
                 rx="8"
                 ry="8"
-            ></rect>
-            <rect
+            ></Rect>
+            <Rect
                 width="48"
                 height="368"
                 x="400"
@@ -51,8 +53,8 @@ function StatsIcon(props) {
                 strokeWidth="32"
                 rx="8"
                 ry="8"
-            ></rect>
-            <rect
+            ></Rect>
+            <Rect
                 width="48"
                 height="448"
                 x="176"
@@ -64,8 +66,8 @@ function StatsIcon(props) {
                 strokeWidth="32"
                 rx="8"
                 ry="8"
-            ></rect>
-        </svg>
+            ></Rect>
+        </Svg>
     );
 }
 
