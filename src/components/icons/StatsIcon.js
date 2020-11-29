@@ -1,4 +1,5 @@
-import React from "react";
+import React from 'react';
+import PropTypes from 'prop-types';
 
 import Svg, { Rect } from 'react-native-svg';
 
@@ -70,5 +71,9 @@ function StatsIcon(props) {
         </Svg>
     );
 }
+
+StatsIcon.propTypes = {
+    color: PropTypes.string
+};
 
 export default StatsIcon;

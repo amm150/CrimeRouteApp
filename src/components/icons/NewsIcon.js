@@ -1,4 +1,5 @@
-import React from "react";
+import React from 'react';
+import PropTypes from 'prop-types';
 
 import Svg, { Path } from 'react-native-svg';
 
@@ -44,5 +45,10 @@ function NewsIcon(props) {
         </Svg>
     );
 }
+
+NewsIcon.propTypes = {
+    color: PropTypes.string
+}; 
+
 
 export default NewsIcon;

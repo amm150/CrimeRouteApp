@@ -1,4 +1,5 @@
-import React from "react";
+import React from 'react';
+import PropTypes from 'prop-types';
 
 import Svg, { Path } from 'react-native-svg';
 
@@ -26,5 +27,10 @@ function SettingsIcon(props) {
         </Svg>
     );
 }
+
+SettingsIcon.propTypes = {
+    color: PropTypes.string
+}; 
+
 
 export default SettingsIcon;

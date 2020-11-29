@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { connect } from 'react-redux';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import ExploreContainer from '../../screens/explore/ExploreContainer';
@@ -8,8 +8,6 @@ import StatisticsContainer from '../../screens/statistics/StatisticsContainer';
 import SettingsContainer from '../../screens/settings/SettingsContainer';
 
 import Icon from '../icons/Icon';
-
-import translate from '../translator/translationUtil';
 import colors from '../colors/colors';
 
 const Tab = createBottomTabNavigator();
@@ -19,9 +17,9 @@ const Tab = createBottomTabNavigator();
  * 
  * @returns {React.ReactNode}
  */
-function NavigationMenu() {
+function NavigationMenu(props) {
     const navigationData = {
-        initialRouteName: translate('explore'),
+        initialRouteName: 'explore',
         screenOptions: ({ route }) => ({
             tabBarIcon: ({ focused }) => {
                 const iconData = {
@@ -32,22 +30,30 @@ function NavigationMenu() {
                 return (
                     <Icon {...iconData}/>
                 );
-            }
+            },
+            tabBarLabel: props.translations[route.name]
         }),
         tabBarOptions: {
-            activeTintColor: colors.primary,
-            inactiveTintColor: colors.gray
+            tabStyle: {
+                padding: 1
+            }
         }  
     }
 
     return (
         <Tab.Navigator {...navigationData}>
-            <Tab.Screen name={translate('explore')} component={ExploreContainer} />
-            <Tab.Screen name={translate('news')} component={NewsContainer} />
-            <Tab.Screen name={translate('statistics')} component={StatisticsContainer} />
-            <Tab.Screen name={translate('settings')} component={SettingsContainer} />
+            <Tab.Screen name={'explore'} component={ExploreContainer} />
+            <Tab.Screen name={'news'} component={NewsContainer} />
+            <Tab.Screen name={'statistics'} component={StatisticsContainer} />
+            <Tab.Screen name={'settings'} component={SettingsContainer} />
         </Tab.Navigator>
     );
 }
 
-export default NavigationMenu;
+const mapStateToProps = state => {
+    return {
+        translations: state.translations
+    }
+}
+
+export default connect(mapStateToProps, { })(NavigationMenu);

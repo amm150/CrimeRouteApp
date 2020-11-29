@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from 'prop-types';
 
 import * as iconNames from './Icons';
 
@@ -9,8 +10,7 @@ import * as iconNames from './Icons';
  * @returns {React.ReactNode}
  */
 function IconWrapper(props) {
-    const iconName = props.name.toLowerCase(),
-        Icon = iconNames[`${iconName}Icon`],
+    const Icon = iconNames[`${props.name}Icon`],
         iconData = {
             color: props.color
         };
@@ -19,5 +19,14 @@ function IconWrapper(props) {
         <Icon {...iconData}/>
     );
 }
+
+IconWrapper.defaultProps = {
+    color: 'black'
+};
+
+IconWrapper.propTypes = {
+    color: PropTypes.string,
+    name: PropTypes.string.isRequired
+}; 
 
 export default IconWrapper;

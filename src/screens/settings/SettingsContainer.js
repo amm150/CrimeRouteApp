@@ -1,27 +1,71 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, {
+    useRef
+} from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import PageHeader from '../../components/headers/PageHeader';
+import DropDownButton from '../../components/dropdowns/DropdownButton';
+import DatabaseUtil from '../../utils/DatabaseUtil';
+
+import { connect } from 'react-redux';
+import { updateLang, updateTranslations } from '../../redux/actions';
+import { languages } from '../../translations/languages';
 
 /**
  * @description SettingsContainer
  * 
  * @returns {React.ReactNode}
  */
-function SettingsContainer() {
+function SettingsContainer(props) {
+    function buildOptions(){
+        return Object.keys(languages).map((key) => {
+            return {
+                id: key,
+                label: props.translations[key]
+            }
+        }, []);
+    }
+
+    const database = useRef(new DatabaseUtil()).current,
+        headerData = {
+            label: props.translations['settings']
+        },
+        dropdownData = {
+            label: props.translations['language'],
+            handleChangeSelectedOption: (value) => {
+                database.storeData('lang', value);
+                props.updateLang(value);
+                props.updateTranslations(languages[value]);
+            },
+            options: buildOptions(),
+            selectedOption: props.lang
+        };
+
 
     return (
         <View>
-            <Text style={styles.text}>
-                This is the settings screen.
-            </Text>
+            <PageHeader {...headerData}/>
+            <View style={styles.contents} >
+                <DropDownButton {...dropdownData} />
+            </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-	text: {
-		fontWeight: 'bold',
-        fontSize: 30
-	}
+    contents: {
+        padding: 15
+    }
 });
 
-export default SettingsContainer;
+const mapStateToProps = (state) => {
+    return { 
+        lang: state.lang,
+        translations: state.translations
+    }
+};
+
+export default connect(mapStateToProps, { 
+    updateLang, 
+    updateTranslations 
+})(SettingsContainer);
