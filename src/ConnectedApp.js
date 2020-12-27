@@ -23,8 +23,6 @@ const Stack = createStackNavigator();
  * @returns {React.ReactNode}
  */
 function ConnectedApp(props) {
-    const [, forceUpdate] = useReducer(x => x + 1, 0);
-
     function buildApp() {
         const navigatorOptions = {
             screenOptions: {
@@ -51,7 +49,10 @@ function ConnectedApp(props) {
 
     if(!initialized) {
         database.getData('lang').then((lang) => {
-            props.updateLang(lang);
+            if(typeof(lang) !== 'undefined') {
+                props.updateLang(lang);
+            }
+            
             setInitialized(true);
         });
     }

@@ -15,7 +15,7 @@ import TimeUtil from '../../utils/TimeUtil';
 function CrimeEventView(props) {
     const timeUtil = useRef(new TimeUtil()).current,
         date = new Date(props.crimedate),
-        time = timeUtil.convertMilitaryTimeToStandard(props.crimetime),
+        time = props.crimetime ? timeUtil.convertMilitaryTimeToStandard(props.crimetime) : 'N/A',
         formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} - ${time}`;
 
     return (

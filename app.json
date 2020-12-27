@@ -22,6 +22,9 @@
       "config": {
         "googleMapsApiKey": "AIzaSyC1p97GZ7KhzcHo82mzEWN39IOlObpj6KA"
       },
+      "infoPlist": {
+          "NSLocationWhenInUseUsageDescription ": "Used to show the user's location on a map."
+      },
       "supportsTablet": true
     },
     "android": {
@@ -31,6 +34,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyC1p97GZ7KhzcHo82mzEWN39IOlObpj6KA"
