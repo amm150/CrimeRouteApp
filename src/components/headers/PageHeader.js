@@ -58,7 +58,9 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start'
     },  
     wrapper: {
-        backgroundColor: colors.white
+        backgroundColor: colors.white,
+        borderBottomColor: colors['light-gray'],
+        borderBottomWidth: 1
     },
     text: {
         position: 'absolute',

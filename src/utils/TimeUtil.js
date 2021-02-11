@@ -1,12 +1,53 @@
-class TimeUtil {
-    convertMilitaryTimeToStandard(militaryTime) {
-        const timeArray = militaryTime.split(':'),
-            hour = timeArray[0],
-            minute = timeArray[1],
-            second = timeArray[2],
-            isPM = (hour.charAt(0) == 1 && hour.charAt(1) > 2) || hour.charAt(0) == 2;
+import { LMS } from "../consts/dateFormats";
 
-        return isPM ? `${hour - 12}:${minute}:${second} PM` : `${hour.charAt(0) == 0 ? hour.charAt(1) : hour}:${minute}:${second} AM`;
+import { format, parseJSON } from 'date-fns'
+
+class TimeUtil {
+    buildDateString(date = '', dateFormat = LMS) {
+        const dateObject = new Date(parseJSON(date)),
+            dateString = date && dateObject instanceof(Date) ? format(dateObject, dateFormat) : 'N/A';
+
+        return dateString;
+    }
+
+    getTodayStart() {
+        const today = new Date();
+
+        today.setHours(0,0,0,0);
+
+        return today.toISOString();
+    }
+
+    getWeekStart() {
+        const weekStart = new Date();
+
+        weekStart.setHours(0,0,0,0);
+
+        const today = weekStart.getDay(),
+            dateValue = weekStart.getDate() - today;
+
+        weekStart.setDate(dateValue);
+
+        return weekStart.toISOString();
+    }
+
+    getMonthStart() {
+        const monthStart = new Date();
+
+        monthStart.setHours(0,0,0,0);
+
+        monthStart.setDate(1);
+
+        return monthStart.toISOString();
+    }
+
+    getYearStart() {
+        const yearStart = new Date();
+
+        yearStart.setHours(0,0,0,0);
+        yearStart.setMonth(0,1);
+
+        return yearStart.toISOString();
     }
 }
 

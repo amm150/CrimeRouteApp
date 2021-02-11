@@ -6,6 +6,7 @@ import { TouchableOpacity, View } from 'react-native';
 
 import ImageAndDescription from './ImageAndDescription';
 import TimeUtil from '../../../utils/TimeUtil';
+import { LMS } from '../../../consts/dateFormats';
 
 /**
  * @description CrimeEventItem
@@ -18,13 +19,12 @@ function CrimeEventItem(props) {
     }
 
     const timeUtil = useRef(new TimeUtil()).current,
-        date = new Date(props.crimedate),
-        time = timeUtil.convertMilitaryTimeToStandard(props.crimetime),
+        date = timeUtil.buildDateString(props.crimedate, LMS),
         itemData = {
             description: `${props.neighborhood} - ${props.location} - ${props.description}`,
             icon: props.buildIcon(props.description),
             image: props.image,
-            title: `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} - ${time}`
+            title: date
         };
 
     return (

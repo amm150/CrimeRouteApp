@@ -1,25 +1,32 @@
-import { open_baltimore } from '../consts/apiKeys';
 import QueryBuilder from './QueryBuilder';
+import OpenBaltimoreCrimeDataAdapter from '../adapters/OpenBaltimoreCrimeDataAdapter';
 
 class OpenBaltimoreDataHandler {
     constructor() {
         this.domain = 'https://data.baltimorecity.gov';
 
         this.queryBuilder = new QueryBuilder();
+        this.adapter = new OpenBaltimoreCrimeDataAdapter();
     }
 
     getCrimeData(postData = {}) {
-        const queryString = this.queryBuilder.buildQueryString(postData);
+        const filterString = this.adapter.formatFilters(postData.filters),
+            queryData = {
+                ...postData,
+                where: filterString
+            };
 
-        return fetch(`${this.domain}/resource/wsfq-mvij.json${queryString}`, {
+        delete queryData.filters;
+
+        const queryString = this.queryBuilder.buildQueryString(queryData);
+
+        return fetch(`https://services1.arcgis.com/UWYHeuuJISiGmgXx/ArcGIS/rest/services/Part_1_Crime_data/FeatureServer/0/query${queryString}`, {
             credentials: 'omit',
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-App-Token': open_baltimore
-            }
+            method: 'GET'
         }).then((response) => {
-            return response.json();
+            return response.json().then((resp) => {
+                return this.adapter.formatCrimeData(resp);
+            });
         }).catch((err) => {
             console.error(err);
         });

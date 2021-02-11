@@ -15,14 +15,13 @@ import PageHeader from '../../components/headers/PageHeader';
 import SearchableAddressPicker from '../../components/dropdowns/SearchableAddressPicker';
 
 import OpenBaltimoreDataHandler from '../../handlers/OpenBaltimoreData';
-import TimeUtil from '../../utils/TimeUtil';
+import OpenBaltimoreDataAdapter from '../../adapters/OpenBaltimoreCrimeDataAdapter';
 
-const baltimoreCityRegion = {
-    latitude: 39.299236,
-    longitude: -76.609383,
-    latitudeDelta: 0.4,
-    longitudeDelta: 0.1,
-};
+import TimeUtil from '../../utils/TimeUtil';
+import { LMS } from '../../consts/dateFormats';
+import GoogleHandler from '../../handlers/GoogleHandler';
+
+import FiltersMenu from '../../components/menus/FiltersMenu';
 
 /**
  * @description ExploreContainer
@@ -31,26 +30,97 @@ const baltimoreCityRegion = {
  */
 function ExploreContainer(props) {
     const timeUtil = useRef(new TimeUtil()).current,
+        mapRef = useRef(null),
         [crimes, setCrimes] = useState([]),
         [currentLocation, setCurrentLocation] = useState(null),
+        [nativeCurrentLocation, setNativeCurrentLocation] = useState(null),
+        [fromLocation, setFromLocation] = useState(null),
+        [toLocation, setToLocation] = useState(null),
         [loading, setLoading] = useState(true),
-        openBaltimoreDataHandler = useRef(new OpenBaltimoreDataHandler()).current;
+        [showRoute, setShowRoute] = useState(false),
+        [route, setRoute] = useState([]),
+        [filters, setFilters] = useState({
+            description: [],
+            weapon: [],
+            crimedatetime: []
+        }),
+        openBaltimoreDataHandler = useRef(new OpenBaltimoreDataHandler()).current,
+        openBaltimoreDataAdapter = useRef(new OpenBaltimoreDataAdapter()).current,
+        googleHandler = useRef(new GoogleHandler()).current;
+
+    function fetchRoute() {
+        const queryData = {
+            alternatives: true,
+            destination: `${toLocation.latitude},${toLocation.longitude}`,
+            mode: 'walking',
+            origin: `${fromLocation.latitude},${fromLocation.longitude}`
+        };
+
+        return googleHandler.getDirections(queryData);
+    }
+
+    useEffect(() => {
+        if(!fromLocation || !toLocation) {
+            setShowRoute(false);
+        } else if (fromLocation && toLocation) {
+            fetchRoute().then((response) => {
+                setRoute(response.routes[0].route);
+                setShowRoute(true);
+            })
+        }
+    }, [
+        fromLocation,
+        toLocation
+    ]);
 
     const fetchResults = useCallback(() => {
-        // Gets the date two weeks ago
         const getResultsPostData = {
-                $order: `crimedate desc`,
-                $limit: 150
+                filters: filters,
+                f: 'json',
+                orderByFields: 'CrimeDateTime DESC',
+                outFields: '*',
+                resultRecordCount: 50
             };
         
         return openBaltimoreDataHandler.getCrimeData(getResultsPostData);
-    }, []);
+    }, [
+        filters
+    ]);
+
+    function calculateCurrentLocation() {
+        let location = null;
+
+        if(currentLocation) {
+            location = currentLocation;
+        } else if(nativeCurrentLocation) {
+            location = nativeCurrentLocation;
+        }
+
+        return location;
+    }
 
     function updateCurrentLocation(data) {
         setCurrentLocation({
             latitude: data.coords.latitude,
             longitude: data.coords.longitude
         });
+    }
+
+    function handleSelectFromLocation(coords) {
+        setFromLocation(coords);
+    }
+
+    function handleSelectToLocation(coords) {
+        setToLocation(coords);
+    }
+    
+    function handleRemoveFromLocation() {
+        setFromLocation(null);
+    }
+
+    function handleRemoveToLocation() {
+        setToLocation(null);
+        setFromLocation(null);
     }
 
     useEffect(() => {
@@ -69,11 +139,12 @@ function ExploreContainer(props) {
 
         fetchResults()
             .then((response) => {
-                setCrimes(response);
+                setCrimes(response.results);
                 setLoading(false);
             });
     }, [
-        fetchResults
+        fetchResults,
+        filters
     ]);
 
     function buildLoadingState() {
@@ -81,11 +152,11 @@ function ExploreContainer(props) {
     }
 
     function buildMarker(data, key = 'currentLocation', callout) {
-        let child;
+        let child = null;
 
         if(callout) {
             child = (
-                <MapView.Callout>
+                <MapView.Callout style={{ flex: 1, position: 'absolute' }}>
                     {callout}
                 </MapView.Callout>
             );
@@ -106,17 +177,15 @@ function ExploreContainer(props) {
                         latitude: Number(crimeData.latitude),
                         longitude: Number(crimeData.longitude)
                     },
-                    pinColor: 'blue'
+                    pinColor: 'red'
                 };
                 
             if(!isNaN(crimeData.latitude) || !isNaN(crimeData.longitude)) {
-                const date = new Date(crimeData.crimedate),
-                    time = crimeData.crimetime ? timeUtil.convertMilitaryTimeToStandard(crimeData.crimetime) : 'N/A',
-                    title = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} - ${time}`,
+                const date = timeUtil.buildDateString(crimeData.crimedate, LMS),
                     callout = (
                         <View style={styles.callout}>
                             <Text style={styles.calloutText}>
-                                {props.translations['date']}: {title}
+                                {props.translations['date']}: {date}
                             </Text>
                             <Text style={styles.calloutText}>
                                 {props.translations['location']}: {crimeData.location}
@@ -141,26 +210,55 @@ function ExploreContainer(props) {
         return markers;
     }
 
+    function buildRoutePath() {
+        const routeData = {
+            coordinates: route,
+            fillColor: colors.primary,
+            geodesic: false,
+            strokeColor: colors.primary,
+            strokeWidth: 5
+        };
+
+        return <MapView.Polyline {...routeData} />
+    }
+    
+    function buildFromAddressPicker() {
+        let markup;
+
+        if (toLocation) {
+            const fromAddressPickerData = {
+                address: fromLocation,
+                currentLocation: calculateCurrentLocation(),
+                handleSelectAddress: handleSelectFromLocation,
+                handleRemoveAddress: handleRemoveFromLocation,
+                placeholderText: props.translations['from']
+            };
+
+            markup = <SearchableAddressPicker {...fromAddressPickerData}/>;
+        }
+
+        return markup;
+    };
+
+    function handleChangeUserLocation(newLoc) {
+        setNativeCurrentLocation({
+            latitude: newLoc.nativeEvent.coordinate.latitude,
+            longitude: newLoc.nativeEvent.coordinate.longitude
+        });
+    }
+
     function buildMap() {
         const mapData = {
+            onUserLocationChange: handleChangeUserLocation,
             onMapReady: async () => {
                 if(Platform.OS === 'android') {
                     const { status } = await Permission.askAsync(Permission.LOCATION);
                 }
             },
-            options: {
-                fullscreenControl: false,
-                mapTypeControl: false,
-                zoomControl: false
-            },
-            followsUserLocation: true,
-            initialRegion: baltimoreCityRegion,
-            provider: 'google',
-            showsUserLocation: true,
-            style: styles.map,
-            userLocationUpdateInterval: 1000
+            ref: mapRef,
+            ...mapOptions
         },
-
+        
         // If we had to manually get their location because they're using a browser.
         currentLocationMarker = currentLocation ? buildMarker({
             coordinate: {
@@ -169,29 +267,50 @@ function ExploreContainer(props) {
             },
             icon: '../../icons/current-location.png'
         }) : null,
-
         crimeMarkers = buildCrimeMarkers(),
-        locationPicker = <SearchableAddressPicker />;
+        toAddressPickerData = {
+            address: toLocation,
+            currentLocation: calculateCurrentLocation(),
+            handleSelectAddress: handleSelectToLocation,
+            handleRemoveAddress: handleRemoveToLocation,
+            placeholderText: props.translations['to']
+        },
+        fromAddressPicker = buildFromAddressPicker(),
+        routePath = showRoute ? buildRoutePath() : null;
 
         return (
-            <MapView {...mapData}>
-                {currentLocationMarker}
-                {crimeMarkers}
+            <View style={StyleSheet.absoluteFillObject}>
+                <MapView {...mapData}>
+                    {crimeMarkers}
+                    {currentLocationMarker}
+                    {routePath}
+                </MapView>
                 <View style={styles.locationPicker}>
-                    {locationPicker}
+                    <SearchableAddressPicker {...toAddressPickerData}/>
+                    {fromAddressPicker}
                 </View>
-            </MapView>
+            </View>
         );
+    }
+
+    function handleChangeFilters(newSelections) {
+        setFilters(newSelections);
     }
 
     const headerData = {
             label: props.translations['explore']
         },
-        markup = loading ? buildLoadingState() : buildMap();
+        markup = loading ? buildLoadingState() : buildMap(),
+        filtersData = {
+            filterOptions: openBaltimoreDataAdapter.getFilters(),
+            handleChangeFilters: handleChangeFilters,
+            selectedFilters: filters
+        };
 
     return (
         <View style={styles.container}>
             <PageHeader {...headerData}/>
+            <FiltersMenu {...filtersData} />
             <View style={styles.contents}>
                 {markup}
             </View>
@@ -221,6 +340,7 @@ const styles = StyleSheet.create({
         fontSize: 14
     },
     callout: {
+        flex: 1,
         padding: 5
     },
     locationPicker: {
@@ -230,6 +350,24 @@ const styles = StyleSheet.create({
     }
 });
 
+const mapOptions = {
+    options: {
+        fullscreenControl: false,
+        mapTypeControl: false,
+        zoomControl: false
+    },
+    followsUserLocation: true,
+    initialRegion: {
+        latitude: 39.299236,
+        longitude: -76.609383,
+        latitudeDelta: 0.4,
+        longitudeDelta: 0.1,
+    },
+    provider: 'google',
+    showsUserLocation: true,
+    style: styles.map,
+    userLocationUpdateInterval: 1000
+};
 
 const mapStateToProps = (state) => {
     return {

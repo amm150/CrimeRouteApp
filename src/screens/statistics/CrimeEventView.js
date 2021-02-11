@@ -6,6 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { connect } from 'react-redux';
 
 import TimeUtil from '../../utils/TimeUtil';
+import { LMS } from '../../consts/dateFormats';
 
 /**
  * @description CrimeEventView
@@ -14,14 +15,12 @@ import TimeUtil from '../../utils/TimeUtil';
  */
 function CrimeEventView(props) {
     const timeUtil = useRef(new TimeUtil()).current,
-        date = new Date(props.crimedate),
-        time = props.crimetime ? timeUtil.convertMilitaryTimeToStandard(props.crimetime) : 'N/A',
-        formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} - ${time}`;
+        date = timeUtil.buildDateString(props.crimedate, LMS);
 
     return (
         <View style={styles.container}>
             <Text style={styles.text}>
-                {props.translations['date']}: {formattedDate}
+                {props.translations['date']}: {date}
             </Text>
             <Text style={styles.text}>
                 {props.translations['location']}: {props.location}
@@ -57,17 +56,16 @@ const styles = StyleSheet.create({
 CrimeEventView.propTypes = {
     crimecode: PropTypes.string,
     crimedate: PropTypes.string,
-    crimetime: PropTypes.string,
     description: PropTypes.string,
     district: PropTypes.string,
     inside_outside: PropTypes.string,
-    latitude: PropTypes.string,
+    latitude: PropTypes.number,
     location: PropTypes.string,
-    longitude: PropTypes.string,
+    longitude: PropTypes.number,
     neighborhood: PropTypes.string,
     post: PropTypes.string,
     premise: PropTypes.string,
-    total_incidents: PropTypes.string,
+    total_incidents: PropTypes.number,
     weapon: PropTypes.string,
 }
 

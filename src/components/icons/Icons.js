@@ -5,3 +5,4 @@ export {default as statisticsIcon} from './StatsIcon';
 export {default as settingsIcon} from './SettingsIcon';
 export {default as crimeIcon} from './CrimeIcon';
 export {default as backIcon} from './BackIcon';
+export {default as XIcon} from './XIcon';

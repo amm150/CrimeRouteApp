@@ -5,7 +5,7 @@ import React, {
     useCallback
 } from 'react';
 import { connect } from 'react-redux';
-import { StyleSheet, ScrollView, Text, View } from 'react-native';
+import { StyleSheet, ScrollView, Text, View} from 'react-native';
 
 import PageHeader from '../../components/headers/PageHeader';
 import ListingWithPagination from '../../components/listings/ListingWithPagination';
@@ -15,7 +15,9 @@ import ImageAndDescriptionLoadingState from '../../components/listings/items/loa
 import Icon from '../../components/icons/Icon';
 
 import OpenBaltimoreDataHandler from '../../handlers/OpenBaltimoreData';
+import OpenBaltimoreDataAdapter from '../../adapters/OpenBaltimoreCrimeDataAdapter';
 import colors from '../../components/colors/colors';
+import FiltersMenu from '../../components/menus/FiltersMenu';
 
 /**
  * @description StatisticsContainer
@@ -26,36 +28,47 @@ function StatisticsContainer(props) {
     const [initializing, setInitializing] = useState(true),
         [eventSelected, setEventSelected] = useState(false),
         [eventData, setEventData] = useState({}),
+        [filters, setFilters] = useState({
+            crimedatetime: [],
+            description: [],
+            weapon: []
+        }),
         [page, setPage] = useState(1),
-        [pageSize, setPageSize] = useState(10),
+        [pageSize, setPageSize] = useState(5),
         [totalResults, setTotalResults] = useState(0),
         [loading, setLoading] = useState(true),
         [results, setResults] = useState([]),
         openBaltimoreDataHandler = useRef(new OpenBaltimoreDataHandler()).current,
+        openBaltimoreDataAdapter = useRef(new OpenBaltimoreDataAdapter()).current,
         ref = React.useRef(null);
 
     const fetchResults = useCallback(() => {
         const getCountPostData = {
-                $query: 'select count(*)'
+                filters: filters,
+                f: 'json',
+                returnCountOnly: true
             },
             getResultsPostData = {
-                $limit: pageSize,
-                $offset: pageSize * page
+                filters: filters,
+                f: 'json',
+                orderByFields: 'CrimeDateTime DESC',
+                outFields: '*',
+                resultOffset: pageSize * (page - 1),
+                resultRecordCount: pageSize
             };
 
         // First get the total results count
         return openBaltimoreDataHandler.getCrimeData(getCountPostData)
-            .then((count) => {
-                const totalResultsCount = Number(count[0].count);
-
-                setTotalResults(totalResultsCount);
+            .then((response) => {
+                setTotalResults(response.count);
 
                 // Then get the actual results
                 return openBaltimoreDataHandler.getCrimeData(getResultsPostData);
             });
     }, [
         pageSize,
-        page
+        page,
+        filters
     ]);
     
     useEffect(() => {
@@ -74,7 +87,7 @@ function StatisticsContainer(props) {
 
         fetchResults()
             .then((response) => {
-                setResults(response);
+                setResults(response.results);
                 setLoading(false);
             });
     }, [
@@ -122,6 +135,10 @@ function StatisticsContainer(props) {
         return <ListingWithPagination {...listingData}/>
     }
 
+    function handleChangeFilters(newSelections) {
+        setFilters(newSelections);
+    }
+
     function buildEventView() {
         const data = {
             ...eventData
@@ -135,11 +152,17 @@ function StatisticsContainer(props) {
             includeBackButton: eventSelected,
             handleClickBack: handleClickBack
         },
-        pageContents = eventSelected ? buildEventView() : buildListing();
+        pageContents = eventSelected ? buildEventView() : buildListing(),
+        filtersData = {
+            filterOptions: openBaltimoreDataAdapter.getFilters(),
+            handleChangeFilters: handleChangeFilters,
+            selectedFilters: filters
+        };
 
     return (
         <View style={styles.container}>
             <PageHeader {...headerData}/>
+            <FiltersMenu {...filtersData} />
             <ScrollView ref={ref} style={styles.contents} >
                 {pageContents}
             </ScrollView>
