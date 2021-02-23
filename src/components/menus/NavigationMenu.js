@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import ExploreContainer from '../../screens/explore/ExploreContainer';
-import NewsContainer from '../../screens/news/NewsContainer';
 import StatisticsContainer from '../../screens/statistics/StatisticsContainer';
 import SettingsContainer from '../../screens/settings/SettingsContainer';
 
@@ -34,6 +33,7 @@ function NavigationMenu(props) {
             tabBarLabel: props.translations[route.name]
         }),
         tabBarOptions: {
+            keyboardHidesTabBar: true,
             tabStyle: {
                 padding: 1
             }
@@ -43,7 +43,6 @@ function NavigationMenu(props) {
     return (
         <Tab.Navigator {...navigationData}>
             <Tab.Screen name={'explore'} component={ExploreContainer} />
-            <Tab.Screen name={'news'} component={NewsContainer} />
             <Tab.Screen name={'statistics'} component={StatisticsContainer} />
             <Tab.Screen name={'settings'} component={SettingsContainer} />
         </Tab.Navigator>

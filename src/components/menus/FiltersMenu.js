@@ -2,7 +2,7 @@ import React, {
     useState
 } from 'react';
 import PropTypes from 'prop-types';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableWithoutFeedback, Text, View, TouchableOpacity } from 'react-native';
 import { BottomSheet, Button, ListItem } from 'react-native-elements';
 import { connect } from 'react-redux';
 import colors from '../../components/colors/colors.json';
@@ -15,15 +15,26 @@ import colors from '../../components/colors/colors.json';
  */
 function FiltersMenu(props) {
     const [showFiltersList, setShowFiltersList] = useState(false),
-        [selectedFilterList, setSelectedFilterList] = useState(null);
+        [selectedFilterList, setSelectedFilterList] = useState(null),
+        [selectedFilters, setSelectedFilters] = useState(props.selectedFilters);
 
+    function handleClickSave() {
+        props.handleChangeFilters(selectedFilters);
+
+        setShowFiltersList(false);
+        setSelectedFilterList(null);
+    }
 
     function handleCloseFilterList() {
-        setSelectedFilterList(null);
-        setShowFiltersList(false);
+        handleClickSave();
     }
 
     function handleClickFilter(filterName) {
+        // If we have a filter already open, save their changes before doing anything else.
+        if(selectedFilterList !== null) {
+            handleClickSave();
+        }
+
         if(selectedFilterList === filterName) {
             handleCloseFilterList();
         } else {
@@ -35,7 +46,7 @@ function FiltersMenu(props) {
     function handleClickOption(id) {
         let newFilters;
 
-        const selectedFiltersListArray = props.selectedFilters[selectedFilterList];
+        const selectedFiltersListArray = selectedFilters[selectedFilterList];
 
         // Already have this selected, so we want to remove it
         if(selectedFiltersListArray.includes(id)) {
@@ -45,27 +56,42 @@ function FiltersMenu(props) {
             newFiltersArray.splice(removedItemIndex, 1);
 
             newFilters = {
-                ...props.selectedFilters,
+                ...selectedFilters,
                 [selectedFilterList]: newFiltersArray
             };
         } else {
-            const selections = selectedFilterList === 'crimedatetime' ? [id] : [...props.selectedFilters[selectedFilterList], id];
+            const selections = selectedFilterList === 'crimedatetime' ? [id] : [...selectedFilters[selectedFilterList], id];
 
             newFilters = {
-                ...props.selectedFilters,
+                ...selectedFilters,
                 [selectedFilterList]: selections
             };
         }
 
-        props.handleChangeFilters(newFilters);
+        setSelectedFilters(newFilters);
+    }
 
-        setShowFiltersList(false);
-        setSelectedFilterList(null);
+    function handleClickClearFilters() {
+        const newFilters = Object.entries(selectedFilters).reduce((acc, [key, value]) => {
+            return {
+                ...acc,
+                [key]: []
+            }
+        }, {});
+
+        setSelectedFilters(newFilters);
+        props.handleChangeFilters(newFilters);
     }
 
     function buildFilters() {
-        return Object.keys(props.filterOptions).map((currentFilter, idx) => {
+        const filters = Object.keys(props.filterOptions).map((currentFilter, idx) => {
             const buttonData = {
+                buttonStyle: {
+                    backgroundColor: colors.primary
+                },
+                titleStyle: {
+                    color: colors.white
+                },
                 containerStyle: styles.filterButton,
                 key: idx,
                 onPress: () => {
@@ -76,7 +102,19 @@ function FiltersMenu(props) {
             };
 
             return <Button {...buttonData} />;
-        }, []);
+        }, []),
+
+        clearFiltersButtonData = {
+            containerStyle: styles.filterButton,
+            key: 'clear-filters',
+            onPress: handleClickClearFilters,
+            title: props.translations['clearfilters'],
+            type: 'outline'
+        },
+
+        clearFiltersButton = <Button {...clearFiltersButtonData} />;
+
+        return [...filters, clearFiltersButton];
     }
 
     function buildFiltersList() {
@@ -89,11 +127,14 @@ function FiltersMenu(props) {
                 Component: TouchableOpacity
             },
             checkBoxData = {
-                checked: props.selectedFilters[selectedFilterList].includes(filterOption.id),
+                checkedIcon: selectedFilterList === 'crimedatetime' ? 'dot-circle-o' : 'check-square-o',
+                checked: selectedFilters[selectedFilterList].includes(filterOption.id),
                 onIconPress: () => {
                     handleClickOption(filterOption.id)
-                }
+                },
+                uncheckedIcon: selectedFilterList === 'crimedatetime' ? 'circle-o' : 'square-o'
             };
+
 
             return (
                 <ListItem {...buttonData}>
@@ -111,25 +152,20 @@ function FiltersMenu(props) {
             containerStyle: {
                 backgroundColor: colors.primary
             },
-            key: 'cancel',
+            key: 'close',
             onPress: handleCloseFilterList,
             Component: TouchableOpacity
-        },
-        titleData = {
-            style: {
-                color: colors.white
-            }
         },
 
         cancelButton = (
             <ListItem {...cancelButtonData}>
                 <ListItem.Content>
-                    <ListItem.Title {...titleData}>
-                        {props.translations['cancel']}
+                    <ListItem.Title style={{color: colors.white}}>
+                        {props.translations['close']}
                     </ListItem.Title>
                 </ListItem.Content>
             </ListItem>
-        )
+        );
         
         return [...filters, cancelButton];
     }
@@ -141,9 +177,11 @@ function FiltersMenu(props) {
     },
     filtersList = showFiltersList ? buildFiltersList() : null,
     bottomSheet = showFiltersList ? (
-        <BottomSheet {...sheetData}>
-            {filtersList}
-        </BottomSheet>
+        <TouchableWithoutFeedback onPress={handleCloseFilterList}>
+            <BottomSheet {...sheetData}>
+                {filtersList}
+            </BottomSheet>
+        </TouchableWithoutFeedback>
     ) : null;
 
     return (

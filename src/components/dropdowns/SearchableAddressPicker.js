@@ -2,7 +2,7 @@ import React, {
     useRef,
     useState
 } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, TouchableWithoutFeedback, Keyboard, FlatList, TextInput } from 'react-native';
 import PropTypes from 'prop-types';
 import Icon from '../icons/Icon';
 import colors from '../colors/colors.json';
@@ -132,8 +132,9 @@ function SearchableAddressPicker(props) {
             data: buildResults(),
             renderItem: buildItem,
             keyExtractor: item => item.place_id,
-            style: styles.searchResultsContainer
-        }
+            style: styles.searchResultsContainer,
+            keyboardShouldPersistTaps: 'handled'
+        };
 
         return (
             <FlatList {...listingData} />
@@ -145,21 +146,27 @@ function SearchableAddressPicker(props) {
     }
 
     const textInputData = {
+        onBlur: () => {
+            setShowResults(false)
+        },
+        clearButtonMode: 'always',
         placeholder: props.placeholderText,
         returnKeyType: 'search',
         style: styles.searchBox,
         placeholderTextColor: colors['dark-gray'],
+        returnKeyType: 'done',
         onFocus: handleFocus,
         onChangeText: searchLocation,
         value: searchValue
     },
-    listing = showResults ? buildListing() : null;
+    listing = showResults ? buildListing() : null,
+    removeIcon = Platform.OS !== 'ios' ? buildRemoveIcon() : null;
 
     return (
         <View style={styles.container}>
             <View style={styles.searchWrapper}>
                 <TextInput {...textInputData}/>
-                {buildRemoveIcon()}
+                {removeIcon}
             </View>
             {listing}
         </View>

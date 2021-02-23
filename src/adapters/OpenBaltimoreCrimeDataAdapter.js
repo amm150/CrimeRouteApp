@@ -75,12 +75,15 @@ class OpenBaltimoreCrimeDataAdapter {
             thisMonth = this.timeUtil.getMonthStart(),
             thisYear = this.timeUtil.getYearStart();
 
-            console.log(thisYear);
         return {
             description: [
                 {
                     id: 'AGG. ASSAULT',
                     name: translations['aggravatedassault']
+                },
+                {
+                    id: 'AUTO THEFT',
+                    name: translations['autotheft']
                 },
                 {
                     id: 'ARSON',
@@ -111,7 +114,7 @@ class OpenBaltimoreCrimeDataAdapter {
                     name: translations['rape']
                 },
                 {
-                    id: 'ROBBERY - CAR JACKING',
+                    id: 'ROBBERY - CARJACKING',
                     name: translations['robberycar']
                 },
                 {

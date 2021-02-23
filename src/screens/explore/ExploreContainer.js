@@ -5,7 +5,7 @@ import React, {
     useCallback
 } from 'react';
 import { connect } from 'react-redux';
-import { StyleSheet, Text, View, ActivityIndicator, Platform, PermissionsAndroid } from 'react-native';
+import { StyleSheet, Image, ScrollView, Text, View, TouchableWithoutFeedback, Keyboard, ActivityIndicator, Platform, PermissionsAndroid } from 'react-native';
 import MapView from 'react-native-maps';
 
 import colors from '../../components/colors/colors';
@@ -20,8 +20,15 @@ import OpenBaltimoreDataAdapter from '../../adapters/OpenBaltimoreCrimeDataAdapt
 import TimeUtil from '../../utils/TimeUtil';
 import { LMS } from '../../consts/dateFormats';
 import GoogleHandler from '../../handlers/GoogleHandler';
-
 import FiltersMenu from '../../components/menus/FiltersMenu';
+
+import AssaultIcon from '../../../assets/assault.png';
+import ArsonIcon from '../../../assets/arson.png';
+import LarcenyAutoIcon from '../../../assets/larcenyauto.png';
+import DefaultCrimeIcon from '../../../assets/default-crime.png';
+import RobberyIcon from '../../../assets/robbery.png';
+import ShootingIcon from '../../../assets/shooting.png';
+import HomicideIcon from '../../../assets/homicide.png';
 
 /**
  * @description ExploreContainer
@@ -39,6 +46,7 @@ function ExploreContainer(props) {
         [loading, setLoading] = useState(true),
         [showRoute, setShowRoute] = useState(false),
         [route, setRoute] = useState([]),
+        [focusRoute, setFocusRoute] = useState(false),
         [filters, setFilters] = useState({
             description: [],
             weapon: [],
@@ -46,7 +54,8 @@ function ExploreContainer(props) {
         }),
         openBaltimoreDataHandler = useRef(new OpenBaltimoreDataHandler()).current,
         openBaltimoreDataAdapter = useRef(new OpenBaltimoreDataAdapter()).current,
-        googleHandler = useRef(new GoogleHandler()).current;
+        googleHandler = useRef(new GoogleHandler()).current,
+        openDataBaltimoreFilters = openBaltimoreDataAdapter.getFilters();
 
     function fetchRoute() {
         const queryData = {
@@ -66,6 +75,7 @@ function ExploreContainer(props) {
             fetchRoute().then((response) => {
                 setRoute(response.routes[0].route);
                 setShowRoute(true);
+                setFocusRoute(true);
             })
         }
     }, [
@@ -79,7 +89,7 @@ function ExploreContainer(props) {
                 f: 'json',
                 orderByFields: 'CrimeDateTime DESC',
                 outFields: '*',
-                resultRecordCount: 50
+                resultRecordCount: 100
             };
         
         return openBaltimoreDataHandler.getCrimeData(getResultsPostData);
@@ -107,10 +117,12 @@ function ExploreContainer(props) {
     }
 
     function handleSelectFromLocation(coords) {
+        Keyboard.dismiss();
         setFromLocation(coords);
     }
 
     function handleSelectToLocation(coords) {
+        Keyboard.dismiss();
         setToLocation(coords);
     }
     
@@ -170,6 +182,55 @@ function ExploreContainer(props) {
     }
 
     function buildCrimeMarkers() {
+        function calculateIcon(data) {
+            let icon = 'default-crime.png';
+
+            const matchingData = openDataBaltimoreFilters.description.find((itemData) => {
+                return data.description === itemData.id;
+            });
+
+            switch(data.description) {
+                case 'AGG. ASSAULT':
+                case 'COMMON ASSAULT':
+                case 'RAPE':
+                    icon = AssaultIcon;
+                    break;
+
+                case 'ROBBERY - COMMERCIAL':
+                case 'ROBBERY - RESIDENCE':
+                case 'ROBBERY - STREET':
+                case 'BURGLARY':
+                case 'LARCENY':
+                    icon = RobberyIcon;
+                    break;
+
+                case 'SHOOTING':
+                    icon = ShootingIcon;
+                    break;
+
+                case 'ARSON':
+                    icon = ArsonIcon;
+                    break;
+
+                case 'HOMICIDE':
+                    icon = HomicideIcon;
+                    break;
+
+                case 'LARCENY FROM AUTO':
+                case 'ROBBERY - CARJACKING':
+                case 'AUTO THEFT':
+                    icon = LarcenyAutoIcon;
+                    break;
+
+                default:
+                    icon = DefaultCrimeIcon;
+                    break;
+                
+            }
+
+            return icon;
+        }
+
         const markers = crimes.map((crimeData, index) => {
             let marker,
                 markerData = {
@@ -177,7 +238,7 @@ function ExploreContainer(props) {
                         latitude: Number(crimeData.latitude),
                         longitude: Number(crimeData.longitude)
                     },
-                    pinColor: 'red'
+                    image: calculateIcon(crimeData)
                 };
                 
             if(!isNaN(crimeData.latitude) || !isNaN(crimeData.longitude)) {
@@ -211,13 +272,26 @@ function ExploreContainer(props) {
     }
 
     function buildRoutePath() {
-        const routeData = {
+        let routeData = {
             coordinates: route,
             fillColor: colors.primary,
             geodesic: false,
             strokeColor: colors.primary,
             strokeWidth: 5
         };
+
+        if(focusRoute){
+            mapRef.current.fitToCoordinates(route, {
+                edgePadding: {
+                    top: 300,
+                    right: 50,
+                    bottom: 50,
+                    left: 50
+                },
+                animated: true
+            });
+            setFocusRoute(false);
+        }
 
         return <MapView.Polyline {...routeData} />
     }
@@ -302,19 +376,21 @@ function ExploreContainer(props) {
         },
         markup = loading ? buildLoadingState() : buildMap(),
         filtersData = {
-            filterOptions: openBaltimoreDataAdapter.getFilters(),
+            filterOptions: openDataBaltimoreFilters,
             handleChangeFilters: handleChangeFilters,
             selectedFilters: filters
         };
 
     return (
-        <View style={styles.container}>
-            <PageHeader {...headerData}/>
-            <FiltersMenu {...filtersData} />
-            <View style={styles.contents}>
-                {markup}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.container}>
+                <PageHeader {...headerData}/>
+                <FiltersMenu {...filtersData} />
+                <View style={styles.contents}>
+                    {markup}
+                </View>
             </View>
-        </View>
+        </TouchableWithoutFeedback>
     );
 }
 
@@ -356,15 +432,16 @@ const mapOptions = {
         mapTypeControl: false,
         zoomControl: false
     },
-    followsUserLocation: true,
     initialRegion: {
         latitude: 39.299236,
         longitude: -76.609383,
         latitudeDelta: 0.4,
         longitudeDelta: 0.1,
     },
+    loadingEnabled: true,
     provider: 'google',
     showsUserLocation: true,
+    showsMyLocationButton: true,
     style: styles.map,
     userLocationUpdateInterval: 1000
 };
