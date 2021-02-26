@@ -22,13 +22,13 @@ import { LMS } from '../../consts/dateFormats';
 import GoogleHandler from '../../handlers/GoogleHandler';
 import FiltersMenu from '../../components/menus/FiltersMenu';
 
-import AssaultIcon from '../../../assets/assault.png';
-import ArsonIcon from '../../../assets/arson.png';
-import LarcenyAutoIcon from '../../../assets/larcenyauto.png';
-import DefaultCrimeIcon from '../../../assets/default-crime.png';
-import RobberyIcon from '../../../assets/robbery.png';
-import ShootingIcon from '../../../assets/shooting.png';
-import HomicideIcon from '../../../assets/homicide.png';
+import AssaultIcon from '../../images/assault.png';
+import ArsonIcon from '../../images/arson.png';
+import LarcenyAutoIcon from '../../images/larcenyauto.png';
+import DefaultCrimeIcon from '../../images/default-crime.png';
+import RobberyIcon from '../../images/robbery.png';
+import ShootingIcon from '../../images/shooting.png';
+import HomicideIcon from '../../images/homicide.png';
 
 /**
  * @description ExploreContainer
@@ -69,7 +69,7 @@ function ExploreContainer(props) {
     }
 
     useEffect(() => {
-        if(!fromLocation || !toLocation) {
+        if (!fromLocation || !toLocation) {
             setShowRoute(false);
         } else if (fromLocation && toLocation) {
             fetchRoute().then((response) => {
@@ -308,7 +308,7 @@ function ExploreContainer(props) {
                 placeholderText: props.translations['from']
             };
 
-            markup = <SearchableAddressPicker {...fromAddressPickerData}/>;
+            markup = <SearchableAddressPicker {...fromAddressPickerData} />;
         }
 
         return markup;

@@ -6,6 +6,20 @@ class OpenBaltimoreCrimeDataAdapter {
         this.timeUtil = new TimeUtil();
     }
 
+    formatCrimeCountData(response, field) {
+        const results = response.features || [],
+            parsedResults = results.map((data) => {
+                return {
+                    name: data.attributes[field],
+                    value: data.attributes[`${field}CrimeCount`]
+                }
+            }, []);
+
+        return {
+            results: parsedResults
+        };
+    }
+
     formatCrimeData(response) {
         const results = response.features || [],
             parsedResults = results.map((data) => {

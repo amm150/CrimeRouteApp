@@ -5,166 +5,107 @@ import React, {
     useCallback
 } from 'react';
 import { connect } from 'react-redux';
-import { StyleSheet, ScrollView, Text, View} from 'react-native';
+import PropTypes from 'prop-types';
+import {
+    StyleSheet,
+    RefreshControl,
+    ScrollView,
+    View
+} from 'react-native';
 
 import PageHeader from '../../components/headers/PageHeader';
-import ListingWithPagination from '../../components/listings/ListingWithPagination';
-import CrimeEventItem from '../../components/listings/items/CrimeEventItem';
-import CrimeEventView from './CrimeEventView';
-import ImageAndDescriptionLoadingState from '../../components/listings/items/loading-states/ImageAndDescriptionLoadingState';
-import Icon from '../../components/icons/Icon';
-
-import OpenBaltimoreDataHandler from '../../handlers/OpenBaltimoreData';
-import OpenBaltimoreDataAdapter from '../../adapters/OpenBaltimoreCrimeDataAdapter';
-import colors from '../../components/colors/colors';
+import OpenBaltimoreCrimeDataAdapter from '../../adapters/OpenBaltimoreCrimeDataAdapter';
 import FiltersMenu from '../../components/menus/FiltersMenu';
+import CrimeCountChart from '../../components/charts/CrimeCountChart';
+import usePrevious from '../../components/_hooks/usePrevious';
 
 /**
  * @description StatisticsContainer
- * 
+ *
  * @returns {React.ReactNode}
  */
 function StatisticsContainer(props) {
-    const [initializing, setInitializing] = useState(true),
-        [eventSelected, setEventSelected] = useState(false),
-        [eventData, setEventData] = useState({}),
+    const [refreshing, setRefreshing] = useState(false),
+        [refreshingCount, setRefreshingCount] = useState(0),
+        prevRefreshingCount = usePrevious(refreshingCount),
         [filters, setFilters] = useState({
-            crimedatetime: [],
-            description: [],
-            weapon: []
+            crimedatetime: []
         }),
-        [page, setPage] = useState(1),
-        [pageSize, setPageSize] = useState(5),
-        [totalResults, setTotalResults] = useState(0),
-        [loading, setLoading] = useState(true),
-        [results, setResults] = useState([]),
-        openBaltimoreDataHandler = useRef(new OpenBaltimoreDataHandler()).current,
-        openBaltimoreDataAdapter = useRef(new OpenBaltimoreDataAdapter()).current,
+        openBaltimoreDataAdapter = useRef(new OpenBaltimoreCrimeDataAdapter()).current,
         ref = React.useRef(null);
 
-    const fetchResults = useCallback(() => {
-        const getCountPostData = {
-                filters: filters,
-                f: 'json',
-                returnCountOnly: true
-            },
-            getResultsPostData = {
-                filters: filters,
-                f: 'json',
-                orderByFields: 'CrimeDateTime DESC',
-                outFields: '*',
-                resultOffset: pageSize * (page - 1),
-                resultRecordCount: pageSize
-            };
-
-        // First get the total results count
-        return openBaltimoreDataHandler.getCrimeData(getCountPostData)
-            .then((response) => {
-                setTotalResults(response.count);
-
-                // Then get the actual results
-                return openBaltimoreDataHandler.getCrimeData(getResultsPostData);
-            });
-    }, [
-        pageSize,
-        page,
-        filters
-    ]);
-    
     useEffect(() => {
-        if(initializing) {
-            setInitializing(false);
+        if (refreshingCount === 0 && prevRefreshingCount > 0) {
+            setRefreshing(false);
         }
-    }, [initializing]);
-
-    useEffect(() => {
-        setLoading(true);
-        ref.current.scrollTo({
-            x: 0, 
-            y: 0, 
-            animated: true
-        })
-
-        fetchResults()
-            .then((response) => {
-                setResults(response.results);
-                setLoading(false);
-            });
     }, [
-        fetchResults,
-        page,
-        pageSize
-    ])
-
-    function handleChangePage(newPage) {
-        setPage(newPage);
-    }
-
-    function buildIcon() {
-        return <Icon name={'crime'} color={colors['dark-gray']} />;
-    }
-
-    function handleClickItem(data) {
-        setEventSelected(true);
-        setEventData(data);
-    }
-
-    function handleClickBack() {
-        setEventSelected(false);
-        setEventData({});
-    }
-
-    function buildListing() {
-        const commonItemData = {
-                buildIcon: buildIcon,
-                handleClickItem: handleClickItem
-            },
-            listingData = {
-                commonItemData: commonItemData,
-                handleChangePage: handleChangePage,
-                items: results,
-                listingItem: CrimeEventItem,
-                listingItemLoadingState: ImageAndDescriptionLoadingState,
-                loading: loading || initializing,
-                loadingStateItemCount: 10,
-                page: page,
-                pageSize: pageSize,
-                totalResults: totalResults
-            };
-
-        return <ListingWithPagination {...listingData}/>
-    }
+        refreshingCount,
+        prevRefreshingCount
+    ]);
 
     function handleChangeFilters(newSelections) {
         setFilters(newSelections);
     }
 
-    function buildEventView() {
-        const data = {
-            ...eventData
-        };
-
-        return <CrimeEventView {...data}/>
+    function handleRefreshData() {
+        setRefreshing(true);
     }
 
+    const handleIncreaseRefreshingCount = useCallback(() => {
+        setRefreshingCount((prevCount) => {
+            return prevCount + 1;
+        });
+    }, []);
+
+    const handleDecreaseRefreshingCount = useCallback(() => {
+        setRefreshingCount((prevCount) => {
+            return prevCount - 1;
+        });
+    }, []);
+
     const headerData = {
-            label: props.translations['statistics'],
-            includeBackButton: eventSelected,
-            handleClickBack: handleClickBack
+            label: props.translations['statistics']
         },
-        pageContents = eventSelected ? buildEventView() : buildListing(),
         filtersData = {
-            filterOptions: openBaltimoreDataAdapter.getFilters(),
+            filterOptions: {
+                crimedatetime: openBaltimoreDataAdapter.getFilters().crimedatetime
+            },
             handleChangeFilters: handleChangeFilters,
             selectedFilters: filters
+        },
+        refreshControlData = {
+            onRefresh: handleRefreshData,
+            refreshing: Boolean(refreshingCount)
+        },
+        scrollViewData = {
+            ref: ref,
+            style: styles.contentsref,
+            refreshControl: <RefreshControl {...refreshControlData} />
+        },
+        commonChartData = {
+            filters: filters,
+            handleDecreaseRefreshingCount: handleDecreaseRefreshingCount,
+            handleIncreaseRefreshingCount: handleIncreaseRefreshingCount,
+            refreshing: refreshing
+        },
+        byTypeData = {
+            ...commonChartData,
+            field: 'Description',
+            title: props.translations['crimeByType']
+        },
+        byWeaponData = {
+            ...commonChartData,
+            field: 'Weapon',
+            title: props.translations['crimeByWeapon']
         };
 
     return (
         <View style={styles.container}>
             <PageHeader {...headerData}/>
             <FiltersMenu {...filtersData} />
-            <ScrollView ref={ref} style={styles.contents} >
-                {pageContents}
+            <ScrollView {...scrollViewData}>
+                <CrimeCountChart {...byTypeData}/>
+                <CrimeCountChart {...byWeaponData}/>
             </ScrollView>
         </View>
     );
@@ -172,17 +113,23 @@ function StatisticsContainer(props) {
 
 const styles = StyleSheet.create({
     container: {
+        display: 'flex',
         flex: 1
-    },  
+    },
 	contents: {
-
+        paddingBottom: 100,
+        marginBottom: 50
     }
 });
+
+StatisticsContainer.propTypes = {
+    translations: PropTypes.object.isRequired
+};
 
 const mapStateToProps = (state) => {
     return {
         translations: state.translations
-    }
+    };
 };
 
 export default connect(mapStateToProps, { })(StatisticsContainer);
