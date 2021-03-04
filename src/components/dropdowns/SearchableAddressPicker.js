@@ -1,23 +1,46 @@
 import React, {
     useRef,
-    useState
+    useState,
+    useCallback
 } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, TouchableWithoutFeedback, Keyboard, FlatList, TextInput } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Platform,
+    TouchableOpacity,
+    FlatList,
+    TextInput,
+    ActivityIndicator
+} from 'react-native';
 import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
+import { debounce } from 'lodash';
 import Icon from '../icons/Icon';
 import colors from '../colors/colors.json';
-import { connect } from 'react-redux';
 
 import GoogleHandler from '../../handlers/GoogleHandler';
- 
 
 function SearchableAddressPicker(props) {
     const googleHandler = useRef(new GoogleHandler()).current,
+        [loading, setLoading] = useState(false),
         [searchValue, setSearchValue] = useState(''),
         [results, setResults] = useState([]),
         [showResults, setShowResults] = useState(false);
 
-    function searchLocation(value) {
+    const fetchAutocompleteAddresses = useCallback((queryData) => {
+        setLoading(true);
+
+        return googleHandler.getAutocompleteAddresses(queryData).then((response) => {
+            setResults(response.predictions);
+            setShowResults(true);
+            setLoading(false);
+        });
+    }, [
+        googleHandler
+    ]);
+
+    const searchLocation = useCallback((value) => {
         setSearchValue(value);
 
         const queryData = {
@@ -27,11 +50,12 @@ function SearchableAddressPicker(props) {
             strictbounds: true
         };
 
-        googleHandler.getAutocompleteAddresses(queryData).then((response) => {
-            setResults(response.predictions);
-            setShowResults(true);
-        });
-    }
+        debouncedFetchAutocompleteAddresses(queryData);
+    }, [
+        debouncedFetchAutocompleteAddresses
+    ]);
+
+    const debouncedFetchAutocompleteAddresses = debounce(fetchAutocompleteAddresses, 250);
 
     async function getPlaceDetails(id) {
         const queryData = {
@@ -67,7 +91,7 @@ function SearchableAddressPicker(props) {
     function buildPredefinedPlaces() {
         let places = [];
 
-        if(props.currentLocation) {
+        if (props.currentLocation) {
             places = [{
                 description: props.translations['currentlocation'],
                 geometry: {
@@ -77,7 +101,7 @@ function SearchableAddressPicker(props) {
                     }
                 },
                 place_id: 'currentlocation'
-            }]
+            }];
         }
 
         return places;
@@ -91,16 +115,16 @@ function SearchableAddressPicker(props) {
                     setSearchValue(data.item.description);
                     setShowResults(false);
 
-                    if(data.item.place_id !== 'currentlocation') {
+                    if (data.item.place_id !== 'currentlocation') {
                         getPlaceDetails(data.item.place_id).then((itemDetails) => {
                             const coordinates = {
                                 latitude: itemDetails.result.geometry.location.lat,
                                 longitude: itemDetails.result.geometry.location.lng
                             };
-    
+
                             props.handleSelectAddress(coordinates);
                         });
-                    } else if(data.item.place_id === 'currentlocation'){
+                    } else if (data.item.place_id === 'currentlocation') {
                         props.handleSelectAddress({
                             latitude: data.item.geometry.location.lat,
                             longitude: data.item.geometry.location.lng
@@ -114,31 +138,48 @@ function SearchableAddressPicker(props) {
                     <Text>{data.item.description}</Text>
                 </TouchableOpacity>
             );
-        };
+        }
 
         function buildResults() {
             let mergedResults = [...results];
 
             const pinnedResults = buildPredefinedPlaces();
 
-            if(pinnedResults.length > 0) {
+            if (pinnedResults.length > 0) {
                 mergedResults = [...pinnedResults, ...results];
             }
 
             return mergedResults;
         }
 
-        const listingData = {
-            data: buildResults(),
-            renderItem: buildItem,
-            keyExtractor: item => item.place_id,
-            style: styles.searchResultsContainer,
-            keyboardShouldPersistTaps: 'handled'
-        };
+        let markup;
 
-        return (
-            <FlatList {...listingData} />
-        );
+        if (loading) {
+            const activityIndicatorData = {
+                color: colors.primary,
+                size: 'large'
+            };
+
+            markup = (
+                <View style={styles.loadingIndicator}>
+                    <ActivityIndicator {...activityIndicatorData} />
+                </View>
+            );
+        } else {
+            const listingData = {
+                data: buildResults(),
+                renderItem: buildItem,
+                keyExtractor: (item) => item.place_id,
+                style: styles.searchResultsContainer,
+                keyboardShouldPersistTaps: 'handled'
+            };
+
+            markup = (
+                <FlatList {...listingData} />
+            );
+        }
+
+        return markup;
     }
 
     function handleFocus() {
@@ -147,13 +188,13 @@ function SearchableAddressPicker(props) {
 
     const textInputData = {
         onBlur: () => {
-            setShowResults(false)
+            setShowResults(false);
         },
         clearButtonMode: 'always',
         placeholder: props.placeholderText,
-        returnKeyType: 'search',
         style: styles.searchBox,
         placeholderTextColor: colors['dark-gray'],
+        refreshing: loading,
         returnKeyType: 'done',
         onFocus: handleFocus,
         onChangeText: searchLocation,
@@ -165,7 +206,7 @@ function SearchableAddressPicker(props) {
     return (
         <View style={styles.container}>
             <View style={styles.searchWrapper}>
-                <TextInput {...textInputData}/>
+                <TextInput {...textInputData} />
                 {removeIcon}
             </View>
             {listing}
@@ -180,11 +221,19 @@ const styles = StyleSheet.create({
     searchWrapper: {
         display: 'flex',
         flexDirection: 'row'
-    }, 
+    },
     searchResultsContainer: {
         flex: 1,
         width: '100%',
         backgroundColor: colors.white
+    },
+    loadingIndicator: {
+        display: 'flex',
+        justifyContent: 'center',
+        flex: 1,
+        width: '100%',
+        backgroundColor: colors.white,
+        height: 100
     },
     resultItem: {
         width: '100%',
@@ -216,21 +265,22 @@ const styles = StyleSheet.create({
 });
 
 SearchableAddressPicker.defaultProps = {
+    currentLocation: null,
     placeholderText: ''
-}
+};
 
 SearchableAddressPicker.propTypes = {
-    address: PropTypes.object,
     currentLocation: PropTypes.object,
     handleSelectAddress: PropTypes.func.isRequired,
     handleRemoveAddress: PropTypes.func.isRequired,
-    placeholderText: PropTypes.string.isRequired
+    placeholderText: PropTypes.string,
+    translations: PropTypes.object.isRequired
 };
 
 const mapStateToProps = (state) => {
     return {
         translations: state.translations
-    }
+    };
 };
 
 export default connect(mapStateToProps, { })(SearchableAddressPicker);
