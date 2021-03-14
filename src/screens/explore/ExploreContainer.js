@@ -5,12 +5,21 @@ import React, {
     useCallback
 } from 'react';
 import { connect } from 'react-redux';
-import { StyleSheet, Image, ScrollView, Text, View, TouchableWithoutFeedback, Keyboard, ActivityIndicator, Platform, PermissionsAndroid } from 'react-native';
+import {
+    StyleSheet,
+    Text,
+    View,
+    TouchableWithoutFeedback,
+    Keyboard,
+    ActivityIndicator,
+    Platform
+} from 'react-native';
 import MapView from 'react-native-maps';
+import PropTypes from 'prop-types';
 
-import colors from '../../components/colors/colors';
 import * as Permission from 'expo-permissions';
- 
+import colors from '../../components/colors/colors.json';
+
 import PageHeader from '../../components/headers/PageHeader';
 import SearchableAddressPicker from '../../components/dropdowns/SearchableAddressPicker';
 
@@ -32,7 +41,7 @@ import HomicideIcon from '../../images/homicide.png';
 
 /**
  * @description ExploreContainer
- * 
+ *
  * @returns {React.ReactNode}
  */
 function ExploreContainer(props) {
@@ -57,7 +66,7 @@ function ExploreContainer(props) {
         googleHandler = useRef(new GoogleHandler()).current,
         openDataBaltimoreFilters = openBaltimoreDataAdapter.getFilters();
 
-    function fetchRoute() {
+    const fetchRoute = useCallback(() => {
         const queryData = {
             alternatives: true,
             destination: `${toLocation.latitude},${toLocation.longitude}`,
@@ -66,7 +75,11 @@ function ExploreContainer(props) {
         };
 
         return googleHandler.getDirections(queryData);
-    }
+    }, [
+        fromLocation,
+        googleHandler,
+        toLocation
+    ]);
 
     useEffect(() => {
         if (!fromLocation || !toLocation) {
@@ -76,11 +89,12 @@ function ExploreContainer(props) {
                 setRoute(response.routes[0].route);
                 setShowRoute(true);
                 setFocusRoute(true);
-            })
+            });
         }
     }, [
         fromLocation,
-        toLocation
+        toLocation,
+        fetchRoute
     ]);
 
     const fetchResults = useCallback(() => {
@@ -91,18 +105,19 @@ function ExploreContainer(props) {
                 outFields: '*',
                 resultRecordCount: 100
             };
-        
+
         return openBaltimoreDataHandler.getCrimeData(getResultsPostData);
     }, [
-        filters
+        filters,
+        openBaltimoreDataHandler
     ]);
 
     function calculateCurrentLocation() {
         let location = null;
 
-        if(currentLocation) {
+        if (currentLocation) {
             location = currentLocation;
-        } else if(nativeCurrentLocation) {
+        } else if (nativeCurrentLocation) {
             location = nativeCurrentLocation;
         }
 
@@ -125,7 +140,7 @@ function ExploreContainer(props) {
         Keyboard.dismiss();
         setToLocation(coords);
     }
-    
+
     function handleRemoveFromLocation() {
         setFromLocation(null);
     }
@@ -140,8 +155,11 @@ function ExploreContainer(props) {
             enableHighAccuracy: true
         };
 
-        // If we can't use the default android or ios location system, fallback to the browser navigator.geolocation tool to get the user's location.
-        if(Platform.OS !== 'ios' && Platform.OS !== 'android') {
+        /**
+         * If we can't use the default android or ios location system,
+         * fallback to the browser navigator.geolocation tool to get the user's location.
+         */
+        if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
             navigator.geolocation.watchPosition(updateCurrentLocation, () => {}, options);
         }
     }, []);
@@ -160,13 +178,13 @@ function ExploreContainer(props) {
     ]);
 
     function buildLoadingState() {
-        return <ActivityIndicator size={'large'} color={colors.primary}/>;
+        return <ActivityIndicator size="large" color={colors.primary} />;
     }
 
     function buildMarker(data, key = 'currentLocation', callout) {
         let child = null;
 
-        if(callout) {
+        if (callout) {
             child = (
                 <MapView.Callout style={{ flex: 1, position: 'absolute' }}>
                     {callout}
@@ -185,11 +203,7 @@ function ExploreContainer(props) {
         function calculateIcon(data) {
             let icon = 'default-crime.png';
 
-            const matchingData = openDataBaltimoreFilters.description.find((itemData) => {
-                return data.description === itemData.id;
-            });
-
-            switch(data.description) {
+            switch (data.description) {
                 case 'AGG. ASSAULT':
                 case 'COMMON ASSAULT':
                 case 'RAPE':
@@ -225,40 +239,50 @@ function ExploreContainer(props) {
                 default:
                     icon = DefaultCrimeIcon;
                     break;
-                
             }
 
             return icon;
         }
 
         const markers = crimes.map((crimeData, index) => {
-            let marker,
-                markerData = {
+            let marker;
+
+            const markerData = {
                     coordinate: {
                         latitude: Number(crimeData.latitude),
                         longitude: Number(crimeData.longitude)
                     },
                     image: calculateIcon(crimeData)
                 };
-                
-            if(!isNaN(crimeData.latitude) || !isNaN(crimeData.longitude)) {
+
+            if (!Number.isNaN(crimeData.latitude) || !Number.isNaN(crimeData.longitude)) {
                 const date = timeUtil.buildDateString(crimeData.crimedate, LMS),
                     callout = (
                         <View style={styles.callout}>
                             <Text style={styles.calloutText}>
-                                {props.translations['date']}: {date}
+                                {props.translations['date']}
+                                :
+                                {date}
                             </Text>
                             <Text style={styles.calloutText}>
-                                {props.translations['location']}: {crimeData.location}
+                                {props.translations['location']}
+                                :
+                                {crimeData.location}
                             </Text>
                             <Text style={styles.calloutText}>
-                                {props.translations['description']}: {crimeData.description}
+                                {props.translations['description']}
+                                :
+                                {crimeData.description}
                             </Text>
                             <Text style={styles.calloutText}>
-                                {props.translations['neighborhood']}: {crimeData.neighborhood}
+                                {props.translations['neighborhood']}
+                                :
+                                {crimeData.neighborhood}
                             </Text>
                             <Text style={styles.calloutText}>
-                                {props.translations['weapon']}: {crimeData.weapon}
+                                {props.translations['weapon']}
+                                :
+                                {crimeData.weapon}
                             </Text>
                         </View>
                     );
@@ -272,7 +296,7 @@ function ExploreContainer(props) {
     }
 
     function buildRoutePath() {
-        let routeData = {
+        const routeData = {
             coordinates: route,
             fillColor: colors.primary,
             geodesic: false,
@@ -280,7 +304,7 @@ function ExploreContainer(props) {
             strokeWidth: 5
         };
 
-        if(focusRoute){
+        if (focusRoute) {
             mapRef.current.fitToCoordinates(route, {
                 edgePadding: {
                     top: 300,
@@ -290,12 +314,13 @@ function ExploreContainer(props) {
                 },
                 animated: true
             });
+
             setFocusRoute(false);
         }
 
-        return <MapView.Polyline {...routeData} />
+        return <MapView.Polyline {...routeData} />;
     }
-    
+
     function buildFromAddressPicker() {
         let markup;
 
@@ -312,7 +337,7 @@ function ExploreContainer(props) {
         }
 
         return markup;
-    };
+    }
 
     function handleChangeUserLocation(newLoc) {
         setNativeCurrentLocation({
@@ -325,14 +350,14 @@ function ExploreContainer(props) {
         const mapData = {
             onUserLocationChange: handleChangeUserLocation,
             onMapReady: async () => {
-                if(Platform.OS === 'android') {
-                    const { status } = await Permission.askAsync(Permission.LOCATION);
+                if (Platform.OS === 'android') {
+                    await Permission.askAsync(Permission.LOCATION);
                 }
             },
             ref: mapRef,
             ...mapOptions
         },
-        
+
         // If we had to manually get their location because they're using a browser.
         currentLocationMarker = currentLocation ? buildMarker({
             coordinate: {
@@ -360,7 +385,7 @@ function ExploreContainer(props) {
                     {routePath}
                 </MapView>
                 <View style={styles.locationPicker}>
-                    <SearchableAddressPicker {...toAddressPickerData}/>
+                    <SearchableAddressPicker {...toAddressPickerData} />
                     {fromAddressPicker}
                 </View>
             </View>
@@ -384,7 +409,7 @@ function ExploreContainer(props) {
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <View style={styles.container}>
-                <PageHeader {...headerData}/>
+                <PageHeader {...headerData} />
                 <FiltersMenu {...filtersData} />
                 <View style={styles.contents}>
                     {markup}
@@ -446,10 +471,14 @@ const mapOptions = {
     userLocationUpdateInterval: 1000
 };
 
+ExploreContainer.propTypes = {
+    translations: PropTypes.object.isRequired
+};
+
 const mapStateToProps = (state) => {
     return {
         translations: state.translations
-    }
+    };
 };
 
 export default connect(mapStateToProps, { })(ExploreContainer);

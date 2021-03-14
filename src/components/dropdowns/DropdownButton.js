@@ -2,14 +2,15 @@ import React, {
     useState
 } from 'react';
 import PropTypes from 'prop-types';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
+import { colors } from 'react-native-elements';
 import InputLabel from '../inputs/InputLabel';
 
 /**
  * @description DropdownButton
- * 
+ *
  * @returns {React.ReactNode}
  */
 function DropdownButton(props) {
@@ -21,8 +22,8 @@ function DropdownButton(props) {
                 key: idx,
                 label: item.label,
                 value: item.id
-            }
-            return <Picker.Item {...itemData} />
+            };
+            return <Picker.Item {...itemData} />;
         });
     }
 
@@ -47,7 +48,7 @@ function DropdownButton(props) {
 
     return (
         <View>
-            <InputLabel {...labelData}/>
+            <InputLabel {...labelData} />
             <Picker {...pickerData}>
                 {pickerItems}
             </Picker>
@@ -64,16 +65,21 @@ const styles = StyleSheet.create({
     }
 });
 
+DropdownButton.defaultProps = {
+    color: colors.primary,
+    disabled: false
+};
+
 DropdownButton.propTypes = {
     color: PropTypes.string,
     disabled: PropTypes.bool,
-    label: PropTypes.string,
-    handleChangeSelectedOption: PropTypes.func,
+    label: PropTypes.string.isRequired,
+    handleChangeSelectedOption: PropTypes.func.isRequired,
     options: PropTypes.array.isRequired,
     selectedOption: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.number
-    ])
-}; 
+    ]).isRequired
+};
 
 export default DropdownButton;
