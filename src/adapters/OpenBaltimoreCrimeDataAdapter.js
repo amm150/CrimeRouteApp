@@ -1,5 +1,7 @@
-import { useSelector } from 'react-redux';
+import store from '../redux/store';
 import TimeUtil from '../utils/TimeUtil';
+
+const state = store.getState();
 
 class OpenBaltimoreCrimeDataAdapter {
     constructor() {
@@ -12,7 +14,7 @@ class OpenBaltimoreCrimeDataAdapter {
                 return {
                     name: data.attributes[field],
                     value: data.attributes[`${field}CrimeCount`]
-                }
+                };
             }, []);
 
         return {
@@ -41,7 +43,7 @@ class OpenBaltimoreCrimeDataAdapter {
                     total_incidents: data.attributes.Total_Incidents,
                     vriname: data.attributes.VRIName,
                     weapon: data.attributes.Weapon
-                }
+                };
             }, []);
 
         return {
@@ -51,40 +53,44 @@ class OpenBaltimoreCrimeDataAdapter {
     }
 
     formatFilters(filters) {
-        const filtersString = Object.keys(filters).reduce((acc, currentFilter) => {
-            let filterString = null;
+        const filterOptions = this.getFilters(),
+            filtersString = Object.keys(filters).reduce((acc, currentFilter) => {
+                let filterString = null;
 
-            if(filters[currentFilter].length) {
-                const selectedValues = filters[currentFilter].map((value) => {
-                    return `'${value}'`;
-                }).join(', ');
+                if (filters[currentFilter].length) {
+                    const selectedValues = filters[currentFilter].map((value) => {
+                        const selectedValue = filterOptions[currentFilter].find((filterOption) => {
+                            return value === filterOption.id;
+                        }).value;
 
-                if(currentFilter === 'crimedatetime') {
-                    filterString = [...acc, `${currentFilter} >= ${selectedValues}`];
+                        return `'${selectedValue}'`;
+                    }).join(', ');
+
+                    if (currentFilter === 'crimedatetime') {
+                        filterString = [...acc, `${currentFilter} >= ${selectedValues}`];
+                    } else {
+                        filterString = [...acc, `${currentFilter} IN (${selectedValues})`];
+                    }
                 } else {
-                    filterString = [...acc, `${currentFilter} IN (${selectedValues})`];
+                    filterString = [...acc];
                 }
-            } else {
-                filterString = [...acc];
-            }
 
-            return filterString;
-        }, []);
-        
+                return filterString;
+            }, []);
+
         let parsedFilters;
 
-        if(filtersString.length) {
+        if (filtersString.length) {
             parsedFilters = filtersString.join(' AND ');
-        } else { 
-            parsedFilters = '1=1'
+        } else {
+            parsedFilters = '1=1';
         }
 
         return parsedFilters;
     }
 
     getFilters() {
-        const translations = useSelector(state => state.translations),
-            today = this.timeUtil.getTodayStart(),
+        const today = this.timeUtil.getTodayStart(),
             thisWeek = this.timeUtil.getWeekStart(),
             thisMonth = this.timeUtil.getMonthStart(),
             thisYear = this.timeUtil.getYearStart();
@@ -93,106 +99,130 @@ class OpenBaltimoreCrimeDataAdapter {
             description: [
                 {
                     id: 'AGG. ASSAULT',
-                    name: translations['aggravatedassault']
+                    name: state.translations['aggravatedassault'],
+                    value: 'AGG. ASSAULT'
                 },
                 {
                     id: 'AUTO THEFT',
-                    name: translations['autotheft']
+                    name: state.translations['autotheft'],
+                    value: 'AUTO THEFT'
                 },
                 {
                     id: 'ARSON',
-                    name: translations['arson']
+                    name: state.translations['arson'],
+                    value: 'ARSON'
                 },
                 {
                     id: 'BURGLARY',
-                    name: translations['burglary']
+                    name: state.translations['burglary'],
+                    value: 'BURGLARY'
                 },
                 {
                     id: 'COMMON ASSAULT',
-                    name: translations['commonassault']
+                    name: state.translations['commonassault'],
+                    value: 'COMMON ASSAULT'
                 },
                 {
                     id: 'HOMICIDE',
-                    name: translations['homicide']
+                    name: state.translations['homicide'],
+                    value: 'HOMICIDE'
                 },
                 {
                     id: 'LARCENY',
-                    name: translations['larceny']
+                    name: state.translations['larceny'],
+                    value: 'LARCENY'
                 },
                 {
                     id: 'LARCENY FROM AUTO',
-                    name: translations['larcenyauto']
+                    name: state.translations['larcenyauto'],
+                    value: 'LARCENY FROM AUTO'
                 },
                 {
                     id: 'RAPE',
-                    name: translations['rape']
+                    name: state.translations['rape'],
+                    value: 'RAPE'
                 },
                 {
                     id: 'ROBBERY - CARJACKING',
-                    name: translations['robberycar']
+                    name: state.translations['robberycar'],
+                    value: 'ROBBERY - CARJACKING'
                 },
                 {
                     id: 'ROBBERY - COMMERCIAL',
-                    name: translations['robberycommercial']
+                    name: state.translations['robberycommercial'],
+                    value: 'ROBBERY - COMMERCIAL'
                 },
                 {
                     id: 'ROBBERY - RESIDENCE',
-                    name: translations['robberyresidence']
+                    name: state.translations['robberyresidence'],
+                    value: 'ROBBERY - RESIDENCE'
                 },
                 {
                     id: 'ROBBERY - STREET',
-                    name: translations['robberystreet']
+                    name: state.translations['robberystreet'],
+                    value: 'ROBBERY - STREET'
                 },
                 {
                     id: 'SHOOTING',
-                    name: translations['shooting']
+                    name: state.translations['shooting'],
+                    value: 'SHOOTING'
                 }
             ],
             weapon: [
                 {
                     id: 'FIRE',
-                    name: translations['fire']
+                    name: state.translations['fire'],
+                    value: 'FIRE'
                 },
                 {
                     id: 'FIREARM',
-                    name: translations['firearm']
+                    name: state.translations['firearm'],
+                    value: 'FIREARM'
                 },
                 {
                     id: 'HANDS',
-                    name: translations['hands']
+                    name: state.translations['hands'],
+                    value: 'HANDS'
                 },
                 {
                     id: 'KNIFE',
-                    name: translations['knife']
+                    name: state.translations['knife'],
+                    value: 'KNIFE'
                 },
                 {
                     id: 'NA',
-                    name: translations['na']
+                    name: state.translations['na'],
+                    value: 'NA'
                 },
                 {
                     id: 'OTHER',
-                    name: translations['other']
+                    name: state.translations['other'],
+                    value: 'OTHER'
                 }
             ],
             crimedatetime: [
                 {
-                    id: today,
-                    name: translations['today']
+                    id: 'today',
+                    name: state.translations['today'],
+                    value: today
                 },
                 {
-                    id: thisWeek,
-                    name: translations['thisweek']
+                    id: 'thisweek',
+                    name: state.translations['thisweek'],
+                    value: thisWeek
                 },
                 {
-                    id: thisMonth,
-                    name: translations['thismonth']
+                    id: 'thismonth',
+                    name: state.translations['thismonth'],
+                    value: thisMonth
                 },
                 {
-                    id: thisYear,
-                    name: translations['thisyear']
+                    id: 'thisyear',
+                    name: state.translations['thisyear'],
+                    value: thisYear
                 }
             ]
-        }
+        };
     }
 }
 

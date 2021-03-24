@@ -1,32 +1,22 @@
-import { LMS } from "../consts/dateFormats";
-
-import { format, parseJSON } from 'date-fns'
+import { format, parseJSON } from 'date-fns';
+import { LMS } from '../consts/dateFormats';
 
 class TimeUtil {
     buildDateString(date = '', dateFormat = LMS) {
         const dateObject = new Date(parseJSON(date)),
-            dateString = date && dateObject instanceof(Date) ? format(dateObject, dateFormat) : 'N/A';
+            dateString = date && dateObject instanceof (Date) ? format(dateObject, dateFormat) : 'N/A';
 
         return dateString;
     }
 
     getTodayStart() {
-        const today = new Date();
-
-        today.setHours(0,0,0,0);
+        const today = new Date(new Date().getTime() - (24 * 60 * 60 * 1000));
 
         return today.toISOString();
     }
 
     getWeekStart() {
-        const weekStart = new Date();
-
-        weekStart.setHours(0,0,0,0);
-
-        const today = weekStart.getDay(),
-            dateValue = weekStart.getDate() - today;
-
-        weekStart.setDate(dateValue);
+        const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
         return weekStart.toISOString();
     }
@@ -34,9 +24,9 @@ class TimeUtil {
     getMonthStart() {
         const monthStart = new Date();
 
-        monthStart.setHours(0,0,0,0);
+        monthStart.setMonth(monthStart.getMonth() - 1);
 
-        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
 
         return monthStart.toISOString();
     }
@@ -44,8 +34,9 @@ class TimeUtil {
     getYearStart() {
         const yearStart = new Date();
 
-        yearStart.setHours(0,0,0,0);
-        yearStart.setMonth(0,1);
+        yearStart.setFullYear(yearStart.getFullYear() - 1);
+
+        yearStart.setHours(0, 0, 0, 0);
 
         return yearStart.toISOString();
     }

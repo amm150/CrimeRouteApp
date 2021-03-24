@@ -20,15 +20,15 @@ class OpenBaltimoreDataHandler {
 
         const queryString = this.queryBuilder.buildQueryString(queryData);
 
-        return fetch(`https://services1.arcgis.com/UWYHeuuJISiGmgXx/ArcGIS/rest/services/Part_1_Crime_data/FeatureServer/0/query${queryString}`, {
+        return fetch(`https://egis.baltimorecity.gov/egis/rest/services/GeoSpatialized_Tables/Part1_Crime/FeatureServer/0/query${queryString}`, {
             credentials: 'omit',
             method: 'GET'
         }).then((response) => {
             return response.json().then((resp) => {
                 return this.adapter.formatCrimeCountData(resp, field);
             });
-        }).catch((err) => {
-            console.error(err);
+        }).catch(() => {
+            // Error fetching the data
         });
     }
 
@@ -43,15 +43,15 @@ class OpenBaltimoreDataHandler {
 
         const queryString = this.queryBuilder.buildQueryString(queryData);
 
-        return fetch(`https://services1.arcgis.com/UWYHeuuJISiGmgXx/ArcGIS/rest/services/Part_1_Crime_data/FeatureServer/0/query${queryString}`, {
+        return fetch(`https://egis.baltimorecity.gov/egis/rest/services/GeoSpatialized_Tables/Part1_Crime/FeatureServer/0/query${queryString}`, {
             credentials: 'omit',
             method: 'GET'
         }).then((response) => {
             return response.json().then((resp) => {
                 return this.adapter.formatCrimeData(resp);
             });
-        }).catch((err) => {
-            console.error(err);
+        }).catch(() => {
+            // Error fetching the data
         });
     }
 }

@@ -9,8 +9,9 @@ import store from './src/redux/store';
 import ConnectedApp from './src/ConnectedApp';
 
 /**
- * @description The main App container that gets imported onto the intial page render. This begins the start of the tree.
- * 
+ * @description The main App container that gets imported onto the intial page render.
+ * This begins the start of the tree.
+ *
  * @returns {React.ReactNode}
  */
 function App() {

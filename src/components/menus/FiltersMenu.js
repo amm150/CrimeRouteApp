@@ -2,15 +2,19 @@ import React, {
     useState
 } from 'react';
 import PropTypes from 'prop-types';
-import { StyleSheet, TouchableWithoutFeedback, Text, View, TouchableOpacity } from 'react-native';
+import {
+    StyleSheet,
+    TouchableWithoutFeedback,
+    View,
+    TouchableOpacity
+} from 'react-native';
 import { BottomSheet, Button, ListItem } from 'react-native-elements';
 import { connect } from 'react-redux';
-import colors from '../../components/colors/colors.json';
-
+import colors from '../colors/colors.json';
 
 /**
  * @description FiltersMenu
- * 
+ *
  * @returns {React.ReactNode}
  */
 function FiltersMenu(props) {
@@ -31,11 +35,11 @@ function FiltersMenu(props) {
 
     function handleClickFilter(filterName) {
         // If we have a filter already open, save their changes before doing anything else.
-        if(selectedFilterList !== null) {
+        if (selectedFilterList !== null) {
             handleClickSave();
         }
 
-        if(selectedFilterList === filterName) {
+        if (selectedFilterList === filterName) {
             handleCloseFilterList();
         } else {
             setSelectedFilterList(filterName);
@@ -49,7 +53,7 @@ function FiltersMenu(props) {
         const selectedFiltersListArray = selectedFilters[selectedFilterList];
 
         // Already have this selected, so we want to remove it
-        if(selectedFiltersListArray.includes(id)) {
+        if (selectedFiltersListArray.includes(id)) {
             const newFiltersArray = [...selectedFiltersListArray],
                 removedItemIndex = newFiltersArray.indexOf(id);
 
@@ -72,11 +76,11 @@ function FiltersMenu(props) {
     }
 
     function handleClickClearFilters() {
-        const newFilters = Object.entries(selectedFilters).reduce((acc, [key, value]) => {
+        const newFilters = Object.entries(selectedFilters).reduce((acc, [key]) => {
             return {
                 ...acc,
                 [key]: []
-            }
+            };
         }, {});
 
         setSelectedFilters(newFilters);
@@ -95,7 +99,7 @@ function FiltersMenu(props) {
                 containerStyle: styles.filterButton,
                 key: idx,
                 onPress: () => {
-                    handleClickFilter(currentFilter)
+                    handleClickFilter(currentFilter);
                 },
                 title: props.translations[currentFilter],
                 type: 'outline'
@@ -122,7 +126,7 @@ function FiltersMenu(props) {
             const buttonData = {
                 key: idx,
                 onPress: () => {
-                    handleClickOption(filterOption.id)
+                    handleClickOption(filterOption.id);
                 },
                 Component: TouchableOpacity
             },
@@ -130,16 +134,15 @@ function FiltersMenu(props) {
                 checkedIcon: selectedFilterList === 'crimedatetime' ? 'dot-circle-o' : 'check-square-o',
                 checked: selectedFilters[selectedFilterList].includes(filterOption.id),
                 onIconPress: () => {
-                    handleClickOption(filterOption.id)
+                    handleClickOption(filterOption.id);
                 },
                 uncheckedIcon: selectedFilterList === 'crimedatetime' ? 'circle-o' : 'square-o'
             };
 
-
             return (
                 <ListItem {...buttonData}>
                     <ListItem.Content style={styles.filterListItemContent}>
-                        <ListItem.CheckBox {...checkBoxData}/>
+                        <ListItem.CheckBox {...checkBoxData} />
                         <ListItem.Title>
                             {filterOption.name}
                         </ListItem.Title>
@@ -160,13 +163,13 @@ function FiltersMenu(props) {
         cancelButton = (
             <ListItem {...cancelButtonData}>
                 <ListItem.Content>
-                    <ListItem.Title style={{color: colors.white}}>
+                    <ListItem.Title style={{ color: colors.white }}>
                         {props.translations['close']}
                     </ListItem.Title>
                 </ListItem.Content>
             </ListItem>
         );
-        
+
         return [...filters, cancelButton];
     }
 
@@ -214,15 +217,16 @@ const styles = StyleSheet.create({
 });
 
 FiltersMenu.propTypes = {
-    filterOptions: PropTypes.object,
-    handleChangeFilters: PropTypes.func,
-    selectedFilters: PropTypes.object,
-}; 
+    filterOptions: PropTypes.object.isRequired,
+    handleChangeFilters: PropTypes.func.isRequired,
+    selectedFilters: PropTypes.object.isRequired,
+    translations: PropTypes.object.isRequired
+};
 
 const mapStateToProps = (state) => {
     return {
         translations: state.translations
-    }
+    };
 };
 
 export default connect(mapStateToProps, { })(FiltersMenu);

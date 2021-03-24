@@ -24,7 +24,7 @@ import GoogleHandler from '../../handlers/GoogleHandler';
 function SearchableAddressPicker(props) {
     const googleHandler = useRef(new GoogleHandler()).current,
         [loading, setLoading] = useState(false),
-        [searchValue, setSearchValue] = useState(''),
+        [searchValue, setSearchValue] = useState(props.selection),
         [results, setResults] = useState([]),
         [showResults, setShowResults] = useState(false);
 
@@ -122,13 +122,13 @@ function SearchableAddressPicker(props) {
                                 longitude: itemDetails.result.geometry.location.lng
                             };
 
-                            props.handleSelectAddress(coordinates);
+                            props.handleSelectAddress(coordinates, data.item.description);
                         });
                     } else if (data.item.place_id === 'currentlocation') {
                         props.handleSelectAddress({
                             latitude: data.item.geometry.location.lat,
                             longitude: data.item.geometry.location.lng
-                        });
+                        }, data.item.description);
                     }
                 }
             };
@@ -266,7 +266,8 @@ const styles = StyleSheet.create({
 
 SearchableAddressPicker.defaultProps = {
     currentLocation: null,
-    placeholderText: ''
+    placeholderText: '',
+    selection: ''
 };
 
 SearchableAddressPicker.propTypes = {
@@ -274,6 +275,7 @@ SearchableAddressPicker.propTypes = {
     handleSelectAddress: PropTypes.func.isRequired,
     handleRemoveAddress: PropTypes.func.isRequired,
     placeholderText: PropTypes.string,
+    selection: PropTypes.string,
     translations: PropTypes.object.isRequired
 };
 

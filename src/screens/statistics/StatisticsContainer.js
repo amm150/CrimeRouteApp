@@ -18,6 +18,7 @@ import OpenBaltimoreCrimeDataAdapter from '../../adapters/OpenBaltimoreCrimeData
 import FiltersMenu from '../../components/menus/FiltersMenu';
 import CrimeCountChart from '../../components/charts/CrimeCountChart';
 import usePrevious from '../../components/_hooks/usePrevious';
+import BarChart from '../../components/charts/BarChart';
 
 /**
  * @description StatisticsContainer
@@ -29,7 +30,7 @@ function StatisticsContainer(props) {
         [refreshingCount, setRefreshingCount] = useState(0),
         prevRefreshingCount = usePrevious(refreshingCount),
         [filters, setFilters] = useState({
-            crimedatetime: []
+            crimedatetime: ['thismonth']
         }),
         openBaltimoreDataAdapter = useRef(new OpenBaltimoreCrimeDataAdapter()).current,
         ref = React.useRef(null);
@@ -90,22 +91,24 @@ function StatisticsContainer(props) {
         },
         byTypeData = {
             ...commonChartData,
+            chartType: BarChart,
             field: 'Description',
             title: props.translations['crimeByType']
         },
         byWeaponData = {
             ...commonChartData,
+            chartType: BarChart,
             field: 'Weapon',
             title: props.translations['crimeByWeapon']
         };
 
     return (
         <View style={styles.container}>
-            <PageHeader {...headerData}/>
+            <PageHeader {...headerData} />
             <FiltersMenu {...filtersData} />
             <ScrollView {...scrollViewData}>
-                <CrimeCountChart {...byTypeData}/>
-                <CrimeCountChart {...byWeaponData}/>
+                <CrimeCountChart {...byTypeData} />
+                <CrimeCountChart {...byWeaponData} />
             </ScrollView>
         </View>
     );

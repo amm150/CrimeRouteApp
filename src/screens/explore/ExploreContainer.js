@@ -52,6 +52,8 @@ function ExploreContainer(props) {
         [nativeCurrentLocation, setNativeCurrentLocation] = useState(null),
         [fromLocation, setFromLocation] = useState(null),
         [toLocation, setToLocation] = useState(null),
+        [fromDescription, setFromDescription] = useState(null),
+        [toDescription, setToDescription] = useState(null),
         [loading, setLoading] = useState(true),
         [showRoute, setShowRoute] = useState(false),
         [route, setRoute] = useState([]),
@@ -59,12 +61,12 @@ function ExploreContainer(props) {
         [filters, setFilters] = useState({
             description: [],
             weapon: [],
-            crimedatetime: []
+            crimedatetime: ['thismonth'] // Defaulting to filter data in the last month
         }),
         openBaltimoreDataHandler = useRef(new OpenBaltimoreDataHandler()).current,
         openBaltimoreDataAdapter = useRef(new OpenBaltimoreDataAdapter()).current,
         googleHandler = useRef(new GoogleHandler()).current,
-        openDataBaltimoreFilters = openBaltimoreDataAdapter.getFilters();
+        openDataBaltimoreFilters = useRef(openBaltimoreDataAdapter.getFilters()).current;
 
     const fetchRoute = useCallback(() => {
         const queryData = {
@@ -102,8 +104,7 @@ function ExploreContainer(props) {
                 filters: filters,
                 f: 'json',
                 orderByFields: 'CrimeDateTime DESC',
-                outFields: '*',
-                resultRecordCount: 100
+                outFields: '*'
             };
 
         return openBaltimoreDataHandler.getCrimeData(getResultsPostData);
@@ -131,23 +132,28 @@ function ExploreContainer(props) {
         });
     }
 
-    function handleSelectFromLocation(coords) {
+    function handleSelectFromLocation(coords, description) {
         Keyboard.dismiss();
         setFromLocation(coords);
+        setFromDescription(description);
     }
 
-    function handleSelectToLocation(coords) {
+    function handleSelectToLocation(coords, description) {
         Keyboard.dismiss();
         setToLocation(coords);
+        setToDescription(description);
     }
 
     function handleRemoveFromLocation() {
         setFromLocation(null);
+        setFromDescription('');
     }
 
     function handleRemoveToLocation() {
         setToLocation(null);
         setFromLocation(null);
+        setToDescription('');
+        setFromDescription('');
     }
 
     useEffect(() => {
@@ -199,6 +205,37 @@ function ExploreContainer(props) {
         );
     }
 
+    function buildHeatMapData() {
+        const points = crimes.map((crimeData) => {
+            return {
+                latitude: crimeData.latitude,
+                longitude: crimeData.longitude
+            };
+        }, []);
+
+        return {
+            points: points,
+            radius: 40,
+            opacity: 1,
+            gradient: {
+                colors: [
+                    'green', // green
+                    'red' // red
+                ],
+                startPoints: [
+                    0.05,
+                    0.6
+                ],
+                colorMapSize: 1000
+            }
+        };
+    }
+
+    /**
+     * @description Builds the crime markers for individual crime events
+     * @deprecated
+     */
+    // eslint-disable-next-line no-unused-vars
     function buildCrimeMarkers() {
         function calculateIcon(data) {
             let icon = 'default-crime.png';
@@ -330,7 +367,8 @@ function ExploreContainer(props) {
                 currentLocation: calculateCurrentLocation(),
                 handleSelectAddress: handleSelectFromLocation,
                 handleRemoveAddress: handleRemoveFromLocation,
-                placeholderText: props.translations['from']
+                placeholderText: props.translations['from'],
+                selection: fromDescription
             };
 
             markup = <SearchableAddressPicker {...fromAddressPickerData} />;
@@ -366,23 +404,27 @@ function ExploreContainer(props) {
             },
             icon: '../../icons/current-location.png'
         }) : null,
-        crimeMarkers = buildCrimeMarkers(),
+        // crimeMarkers = buildCrimeMarkers(),
         toAddressPickerData = {
             address: toLocation,
             currentLocation: calculateCurrentLocation(),
             handleSelectAddress: handleSelectToLocation,
             handleRemoveAddress: handleRemoveToLocation,
-            placeholderText: props.translations['to']
+            placeholderText: props.translations['to'],
+            selection: toDescription
         },
         fromAddressPicker = buildFromAddressPicker(),
-        routePath = showRoute ? buildRoutePath() : null;
+        routePath = showRoute ? buildRoutePath() : null,
+        heatMapData = buildHeatMapData(),
+        heatMap = crimes.length > 0 && typeof (MapView.Heatmap) !== 'undefined' ? <MapView.Heatmap {...heatMapData} /> : null;
 
         return (
             <View style={StyleSheet.absoluteFillObject}>
                 <MapView {...mapData}>
-                    {crimeMarkers}
+                    {/* {crimeMarkers} */}
                     {currentLocationMarker}
                     {routePath}
+                    {heatMap}
                 </MapView>
                 <View style={styles.locationPicker}>
                     <SearchableAddressPicker {...toAddressPickerData} />
@@ -460,8 +502,8 @@ const mapOptions = {
     initialRegion: {
         latitude: 39.299236,
         longitude: -76.609383,
-        latitudeDelta: 0.4,
-        longitudeDelta: 0.1,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.05,
     },
     loadingEnabled: true,
     provider: 'google',
