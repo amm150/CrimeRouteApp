@@ -11,10 +11,16 @@ class OpenBaltimoreCrimeDataAdapter {
     formatCrimeCountData(response, field) {
         const results = response.features || [],
             parsedResults = results.map((data) => {
-                return {
-                    name: data.attributes[field],
-                    value: data.attributes[`${field}CrimeCount`]
-                };
+                let itemData = {};
+
+                if (data.attributes[field] !== null) {
+                    itemData = {
+                        name: data.attributes[field],
+                        value: data.attributes[`${field}CrimeCount`]
+                    };
+                }
+
+                return itemData;
             }, []);
 
         return {
