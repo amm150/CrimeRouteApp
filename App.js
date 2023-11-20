@@ -1,37 +1,28 @@
 import React from 'react';
-import { StyleSheet, Text, View, AppRegistry } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import NavigationMenu from './src/components/menus/NavigationMenu';
+import { AppRegistry } from 'react-native';
 
-import translate from './src/components/translator/translationUtil';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-const Stack = createStackNavigator();
+import { Provider as StoreProvider } from 'react-redux';
+import store from './src/redux/store';
+
+import ConnectedApp from './src/ConnectedApp';
 
 /**
- * @description The main App container that gets imported onto the intial page render. This begins the start of the tree.
- * 
+ * @description The main App container that gets imported onto the intial page render.
+ * This begins the start of the tree.
+ *
  * @returns {React.ReactNode}
  */
 function App() {
-
     return (
-        <NavigationContainer>
-            <Stack.Navigator>
-                <Stack.Screen name={translate('explore')} component={NavigationMenu} />
-            </Stack.Navigator>
-        </NavigationContainer>
+        <StoreProvider store={store}>
+            <SafeAreaProvider>
+                <ConnectedApp />
+            </SafeAreaProvider>
+        </StoreProvider>
     );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 
 AppRegistry.registerComponent('App', () => App);
 

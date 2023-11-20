@@ -1,27 +1,31 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { StyleSheet, Text, View } from 'react-native';
 
 /**
- * @description NewsContainer
+ * @description Template
  * 
  * @returns {React.ReactNode}
  */
-function NewsContainer() {
+function Template() {
 
     return (
         <View>
             <Text style={styles.text}>
-                This is the news screen.
+
             </Text>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-	text: {
-		fontWeight: 'bold',
-        fontSize: 30
+	container: {
+
 	}
 });
 
-export default NewsContainer;
+Template.propTypes = {
+    
+}; 
+
+export default Template;

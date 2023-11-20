@@ -1,0 +1,33 @@
+env:
+  browser: true
+  commonjs: true
+  es2021: true
+extends:
+  - 'plugin:react/recommended'
+  - 'eslint:recommended'
+  - 'plugin:react-hooks/recommended'
+  - airbnb
+parserOptions:
+  ecmaFeatures:
+    jsx: true
+  ecmaVersion: 12
+plugins:
+  - react
+rules: {
+  linebreak-style: off,
+  indent: off,
+  one-var: off,
+  object-shorthand: off,
+  react/jsx-filename-extension: off,
+  react/jsx-props-no-spreading: off,
+  react/jsx-indent: off,
+  arrow-body-style: off,
+  no-tabs: off,
+  dot-notation: off,
+  comma-dangle: off,
+  eol-last: off,
+  no-use-before-define: off,
+  react/destructuring-assignment: off,
+  react/forbid-prop-types: off,
+  class-methods-use-this: off
+}

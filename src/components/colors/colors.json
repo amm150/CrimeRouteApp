@@ -1,5 +1,9 @@
 {
+    "black": "#000000",
+    "dark-gray": "#808080",
+    "light-gray": "#EBEBEB",
     "primary": "#0373fc",
     "primary-focused": "#0318fc",
-    "primary-disabled": "#c9c9c9"
+    "primary-disabled": "#c9c9c9",
+    "white": "#FFFFFF"
 }
