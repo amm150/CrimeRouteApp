@@ -1,5 +1,4 @@
 # CrimeRouteApp
-
 CrimeRouteApp is a React Native application for providing geographical crime data and maps.
 
 ## Available Scripts
@@ -56,3 +55,5 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
+=======
+This is a mobile app developed using React-Native. The app was built for a thesis project and is designed to help people plan a safe route while walking in Baltimore City.
